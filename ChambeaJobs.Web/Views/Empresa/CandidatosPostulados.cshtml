@@ -1,0 +1,363 @@
+@model List<CandidatoPostuladoDto>
+@{
+    ViewData["Title"] = "Candidatos postulados";
+    var estados = ViewBag.EstadosDisponibles as List<EstadoPostulacionOptionDto> ?? new();
+    var vacanteId = (int)ViewBag.VacanteId;
+    var evaluaciones = ViewBag.Evaluaciones as Dictionary<int, EvaluacionResumenDto> ?? new();
+    var estadoPaquete = ViewBag.EstadoPaquete as PaqueteEstadoDto;
+    var incluyeVideoCv = estadoPaquete?.IncluyeVideoCv ?? false;
+    var incluyePrueba = estadoPaquete?.IncluyePruebaPsicometrica ?? false;
+}
+
+@if (estadoPaquete != null && (!incluyeVideoCv || !incluyePrueba))
+{
+    <div class="container pt-4">
+        <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span><i class="fa-solid fa-lock me-1"></i> Tu plan <strong>@(estadoPaquete.NombrePlan ?? "actual")</strong> no incluye Video CV ni Evaluación psicométrica.</span>
+            <a asp-controller="Empresa" asp-action="ComprarPaquete" class="btn btn-sm cj-btn-primary">Ver Plan Empresarial</a>
+        </div>
+    </div>
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <h2 class="mb-0">Candidatos postulados</h2>
+        <span class="small text-secondary"><i class="fa-solid fa-star me-1" style="color:#F0B429;"></i>Ordenados automáticamente por compatibilidad</span>
+    </div>
+
+    @if (Model.Any())
+    {
+        var entrevistasProgramadas = Model.Count(c => c.Estado == "Entrevista");
+        var evaluacionesPendientes = evaluaciones.Values.Count(e => e.Estado == "Pendiente");
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Postulantes</div>
+                        <div class="cj-estado-sub">@Model.Count candidatos en total</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-users"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta @(entrevistasProgramadas > 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Entrevistas programadas</div>
+                        <div class="cj-estado-sub">@entrevistasProgramadas agendadas</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(entrevistasProgramadas > 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta @(evaluacionesPendientes == 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Evaluaciones pendientes</div>
+                        <div class="cj-estado-sub">@evaluacionesPendientes sin responder</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(evaluacionesPendientes == 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <p class="small text-secondary mb-0">Aún no hay candidatos postulados a esta vacante.</p>
+        }
+        else
+        {
+            @foreach (var c in Model)
+            {
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3">
+                        @if (!string.IsNullOrEmpty(c.FotoUrl))
+                        {
+                            <img src="@c.FotoUrl" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:var(--color-primary-100);">
+                                <i class="fa-solid fa-user" style="color:var(--color-primary-700);"></i>
+                            </div>
+                        }
+                        <div>
+                                <a asp-controller="Empresa" asp-action="DetalleCandidato" asp-route-candidatoId="@c.CandidatoId" class="fw-semibold text-decoration-none" style="color:var(--color-text);">
+                                    @c.NombreCompleto
+                                </a>
+                                <div class="small text-secondary">
+                                    Postulado el @c.FechaPostulacion.ToString("dd/MM/yyyy")
+                                    @if (!string.IsNullOrEmpty(c.Disponibilidad))
+                                    {
+                                        <span class="cj-badge @(c.Disponibilidad == "Inmediata" ? "cj-badge-success" : "cj-badge-warning") ms-1" style="font-size:0.65rem;">
+                                            @c.Disponibilidad
+                                        </span>
+                                    }
+                                </div>
+                                <div class="small" title="@c.PuntajeCompatibilidad.ToString("0.0")% de compatibilidad">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="fa-solid fa-star" style="color:@(i <= c.Estrellas ? "#F0B429" : "#D9D9D9"); font-size:0.8rem;"></i>
+                                    }
+                                    <span class="text-secondary ms-1">(@c.PuntajeCompatibilidad.ToString("0")%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            @if (incluyeVideoCv)
+                            {
+                                <a asp-controller="Empresa" asp-action="VerVideoCv" asp-route-postulacionId="@c.PostulacionId" asp-route-vacanteId="@vacanteId" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+                                    <i class="fa-solid fa-video"></i> Video CV
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="btn btn-sm btn-outline-secondary disabled" title="Disponible en el Plan Empresarial">
+                                    <i class="fa-solid fa-lock"></i> Video CV
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(c.CvUrl))
+                            {
+                                <a asp-controller="Empresa" asp-action="DescargarCv" asp-route-postulacionId="@c.PostulacionId" asp-route-vacanteId="@vacanteId" target="_blank" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+                                    <i class="fa-solid fa-file-arrow-down"></i> CV
+                                </a>
+                            }
+                            @{
+                                var evaluacion = evaluaciones.TryGetValue(c.PostulacionId, out var ev) ? ev : null;
+                            }
+                            @if (!incluyePrueba && (evaluacion is null || evaluacion.Estado == "Sin enviar"))
+                            {
+                                <span class="btn btn-sm btn-outline-secondary disabled" title="Disponible en el Plan Empresarial">
+                                    <i class="fa-solid fa-lock"></i> Evaluación
+                                </span>
+                            }
+                            else if (evaluacion is null || evaluacion.Estado == "Sin enviar")
+                            {
+                                <button type="button" class="btn btn-sm cj-btn-outline" style="color:var(--color-accent-700); border-color:var(--color-accent-700);" data-bs-toggle="modal" data-bs-target="#modal-evaluacion-@c.PostulacionId">
+                                    <i class="fa-solid fa-clipboard-question"></i> Enviar evaluación
+                                </button>
+                            }
+                            else if (evaluacion.Estado == "Pendiente")
+                            {
+                                <span class="cj-badge cj-badge-warning">Evaluación pendiente</span>
+                                @if (!string.IsNullOrWhiteSpace(c.Telefono))
+                                {
+                                    <button type="button" class="btn btn-sm btn-whatsapp-recordatorio" data-telefono="@c.Telefono" data-nombre="@c.NombreCompleto" style="background:#25D366; color:white;" title="Recordar por WhatsApp">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                    </button>
+                                }
+                            }
+                            else if (evaluacion.Estado == "Completada")
+                            {
+                                <a asp-controller="Empresa" asp-action="ResultadosEvaluacion" asp-route-evaluacionId="@evaluacion.EvaluacionId" asp-route-vacanteId="@vacanteId" class="btn btn-sm cj-btn-primary">
+                                    <i class="fa-solid fa-brain"></i> Perfil psicométrico (@evaluacion.PuntajeCompatibilidad%)
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="cj-badge cj-badge-error">Evaluación vencida</span>
+                            }
+                            @if (c.EntrevistaProgramada)
+                            {
+                                <a asp-controller="Empresa" asp-action="VideoEntrevista" asp-route-postulacionId="@c.PostulacionId" asp-route-vacanteId="@vacanteId" class="btn btn-sm" style="background:#7C3AED; color:white;" target="_blank">
+                                    <i class="fa-solid fa-video"></i> Videollamada
+                                </a>
+                            }
+                            <button type="button" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);" data-bs-toggle="collapse" data-bs-target="#entrevista_@c.PostulacionId">
+                                <i class="fa-solid fa-calendar-plus"></i> Entrevista
+                            </button>
+                            @if (!string.IsNullOrWhiteSpace(c.Telefono))
+                            {
+                                <button type="button" class="btn btn-sm btn-whatsapp-general" data-telefono="@c.Telefono" data-nombre="@c.NombreCompleto" style="background:#25D366; color:white;" title="Escribirle por WhatsApp">
+                                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="small text-secondary align-self-center" title="Este candidato no tiene teléfono registrado en su perfil">
+                                    <i class="fa-brands fa-whatsapp"></i> Sin teléfono
+                                </span>
+                            }
+                            <select name="nuevoEstadoId_@c.PostulacionId" class="form-select form-select-sm select-estado" data-postulacion-id="@c.PostulacionId">
+                                @foreach (var e in estados)
+                                {
+                                    <option value="@e.Id" selected="@(e.Id == c.EstadoId)">@e.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="collapse" id="entrevista_@c.PostulacionId">
+                        <form asp-controller="Empresa" asp-action="ProgramarEntrevista" method="post" class="row g-2 align-items-end py-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="postulacionId" value="@c.PostulacionId" />
+                            <input type="hidden" name="vacanteId" value="@vacanteId" />
+                            <div class="col-md-3">
+                                <label class="form-label small mb-0">Fecha y hora</label>
+                                <input type="datetime-local" name="fechaEntrevista" class="form-control form-control-sm dato-entrevista" data-campo="fecha" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-0">Lugar</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista" data-campo="lugar" placeholder="Ej. Oficinas centrales" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-0">Dirección</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista" data-campo="direccion" placeholder="Ej. Km 5 carretera a Masaya" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-0">Preguntar por</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista" data-campo="contacto" placeholder="Ej. Marcela" />
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small mb-0">Nota (opcional)</label>
+                                <input type="text" name="nota" class="form-control form-control-sm dato-entrevista" data-campo="nota" placeholder="Ej. entrevista virtual por Zoom" />
+                            </div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn cj-btn-primary btn-sm">Programar</button>
+                                @if (!string.IsNullOrWhiteSpace(c.Telefono))
+                                {
+                                    <button type="button" class="btn btn-sm btn-whatsapp-entrevista" data-telefono="@c.Telefono" data-nombre="@c.NombreCompleto" style="background:#25D366; color:white;">
+                                        <i class="fa-brands fa-whatsapp"></i> Enviar datos por WhatsApp
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="small text-secondary align-self-center">Este candidato no tiene teléfono registrado.</span>
+                                }
+                            </div>
+                        </form>
+                    </div>
+                }
+            }
+        </div>
+
+    @foreach (var c in Model)
+    {
+        <form asp-controller="Empresa" asp-action="CambiarEstadoPostulacion" method="post" id="formCambiarEstado_@c.PostulacionId" class="d-none">
+            <input type="hidden" name="postulacionId" value="@c.PostulacionId" />
+            <input type="hidden" name="vacanteId" value="@vacanteId" />
+            <input type="hidden" name="nuevoEstadoId" id="nuevoEstadoId_hidden_@c.PostulacionId" />
+        </form>
+
+        <!-- Modal: Enviar evaluación psicométrica -->
+        <div class="modal fade" id="modal-evaluacion-@c.PostulacionId" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form asp-controller="Empresa" asp-action="EnviarEvaluacion" method="post">
+                        <input type="hidden" name="PostulacionId" value="@c.PostulacionId" />
+                        <input type="hidden" name="vacanteId" value="@vacanteId" />
+                        <div class="modal-header">
+                            <h5 class="modal-title">Enviar evaluación psicométrica</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="small text-secondary">
+                                Se enviará a <strong>@c.NombreCompleto</strong> la prueba de personalidad
+                                Big Five (25 preguntas, ~10 minutos).
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label">Fecha límite</label>
+                                <input type="date" name="FechaLimite" class="form-control" value="@DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd")" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mensaje personalizado (opcional)</label>
+                                <textarea name="Mensaje" class="form-control" rows="3" placeholder="Hola, como parte de nuestro proceso de selección te invitamos a completar esta evaluación..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn cj-btn-primary">Enviar evaluación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // El <select> de cada fila vive dentro del <form> de comparación (para no anidar forms),
+        // así que al cambiar de estado copiamos el valor al form oculto real y lo enviamos.
+        document.querySelectorAll('.select-estado').forEach(sel => {
+            sel.dataset.valorAnterior = sel.value;
+            sel.addEventListener('change', () => {
+                const textoSeleccionado = sel.options[sel.selectedIndex].text.trim();
+
+                if (textoSeleccionado === 'Contratado') {
+                    const confirmado = confirm('¿Estás seguro que este candidato fue contratado? Esta acción cerrará la vacante automáticamente y ya no aceptará más postulaciones.');
+                    if (!confirmado) {
+                        sel.value = sel.dataset.valorAnterior;
+                        return;
+                    }
+                }
+
+                const postulacionId = sel.dataset.postulacionId;
+                document.getElementById('nuevoEstadoId_hidden_' + postulacionId).value = sel.value;
+                document.getElementById('formCambiarEstado_' + postulacionId).submit();
+            });
+        });
+
+        // ---------- Botones de WhatsApp (enlaces wa.me, sin necesitar ninguna API externa) ----------
+        function telefonoParaWhatsApp(telefono) {
+            // Normaliza el numero nicaraguense (8 digitos, con o sin guion) al formato internacional +505
+            const soloDigitos = telefono.replace(/\D/g, '');
+            return '505' + soloDigitos.slice(-8);
+        }
+
+        document.querySelectorAll('.btn-whatsapp-entrevista').forEach(boton => {
+            boton.addEventListener('click', function () {
+                const contenedor = this.closest('form');
+                const obtener = campo => contenedor.querySelector('[data-campo="' + campo + '"]')?.value?.trim() || '';
+
+                const fechaTexto = obtener('fecha');
+                const fechaFormateada = fechaTexto ? new Date(fechaTexto).toLocaleString('es-NI', { dateStyle: 'full', timeStyle: 'short' }) : '(pendiente de definir)';
+                const lugar = obtener('lugar') || '(pendiente de definir)';
+                const direccion = obtener('direccion') || '(pendiente de definir)';
+                const contacto = obtener('contacto') || '(pendiente de definir)';
+                const nota = obtener('nota');
+
+                let mensaje = `Hola ${this.dataset.nombre}, te escribimos de ChambeaJobs para confirmar tu entrevista:\n\n`;
+                mensaje += `📅 Fecha y hora: ${fechaFormateada}\n`;
+                mensaje += `📍 Lugar: ${lugar}\n`;
+                mensaje += `🏠 Dirección: ${direccion}\n`;
+                mensaje += `🙋 Preguntar por: ${contacto}\n`;
+                if (nota) mensaje += `\nNota adicional: ${nota}\n`;
+                mensaje += `\n¡Te esperamos!`;
+
+                const url = 'https://wa.me/' + telefonoParaWhatsApp(this.dataset.telefono) + '?text=' + encodeURIComponent(mensaje);
+                window.open(url, '_blank');
+            });
+        });
+
+        document.querySelectorAll('.btn-whatsapp-recordatorio').forEach(boton => {
+            boton.addEventListener('click', function () {
+                const mensaje = `Hola ${this.dataset.nombre}, te escribimos de ChambeaJobs para recordarte que tienes una evaluación de personalidad pendiente de responder. Puedes completarla desde tu cuenta en la sección "Mis postulaciones". ¡Gracias!`;
+                const url = 'https://wa.me/' + telefonoParaWhatsApp(this.dataset.telefono) + '?text=' + encodeURIComponent(mensaje);
+                window.open(url, '_blank');
+            });
+        });
+
+        // Botón de WhatsApp fijo por candidato (siempre visible en la fila
+        // principal, no solo dentro del formulario de programar entrevista).
+        // Usa el teléfono de ESE candidato en particular, tomado de su propio
+        // botón (data-telefono), así que nunca se mezcla entre postulantes.
+        document.querySelectorAll('.btn-whatsapp-general').forEach(boton => {
+            boton.addEventListener('click', function () {
+                const mensaje = `Hola ${this.dataset.nombre}, te escribimos de ChambeaJobs sobre tu postulación. ¿Tienes un momento para conversar?`;
+                const url = 'https://wa.me/' + telefonoParaWhatsApp(this.dataset.telefono) + '?text=' + encodeURIComponent(mensaje);
+                window.open(url, '_blank');
+            });
+        });
+    </script>
+}

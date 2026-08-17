@@ -1,0 +1,210 @@
+@model List<PostulantePasantiaDto>
+@{
+    ViewData["Title"] = "Postulantes de la pasantía";
+    var pasantiaId = (int)ViewBag.PasantiaId;
+    var estados = new[] { "Postulado", "En revisión", "Aceptado", "Rechazado" };
+}
+
+<div class="container py-5">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px; border-radius:var(--radius-md); background:#F3EBFB;">
+            <i class="fa-solid fa-users" style="color:#7C3AED;"></i>
+        </div>
+        <h2 class="mb-0">Postulantes</h2>
+    </div>
+
+    @if (Model.Any())
+    {
+        var aceptados = Model.Count(c => c.Estado == "Aceptado");
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Postulantes</div>
+                        <div class="cj-estado-sub">@Model.Count candidatos en total</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-users"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta @(aceptados > 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Aceptados</div>
+                        <div class="cj-estado-sub">@aceptados de @Model.Count</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(aceptados > 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">En revisión</div>
+                        <div class="cj-estado-sub">@Model.Count(c => c.Estado == "En revisión") pendientes de decisión</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-magnifying-glass"></i></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <p class="small text-secondary mb-0">Aún no hay candidatos postulados a esta pasantía.</p>
+        }
+        else
+        {
+            @foreach (var c in Model)
+            {
+                <div class="py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            @if (!string.IsNullOrEmpty(c.FotoUrl))
+                            {
+                                <img src="@c.FotoUrl" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:#F3EBFB;">
+                                    <i class="fa-solid fa-user" style="color:#7C3AED;"></i>
+                                </div>
+                            }
+                            <div>
+                                <div class="fw-semibold">@c.NombreCompleto</div>
+                                <div class="small text-secondary">Postulado el @c.FechaPostulacion.ToString("dd/MM/yyyy")</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            @if (!string.IsNullOrEmpty(c.CvUrl))
+                            {
+                                <a href="@c.CvUrl" target="_blank" class="btn btn-sm cj-btn-outline" style="color:#7C3AED; border-color:#7C3AED;">
+                                    <i class="fa-solid fa-file-arrow-down"></i> CV
+                                </a>
+                            }
+                            <button type="button" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);" data-bs-toggle="collapse" data-bs-target="#entrevista_@c.PostulacionId">
+                                <i class="fa-solid fa-calendar-plus"></i> Entrevista
+                            </button>
+                            @if (!string.IsNullOrWhiteSpace(c.Telefono))
+                            {
+                                <button type="button" class="btn btn-sm btn-whatsapp-general" data-telefono="@c.Telefono" data-nombre="@c.NombreCompleto" style="background:#25D366; color:white;" title="Escribirle por WhatsApp">
+                                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="small text-secondary align-self-center" title="Este candidato no tiene teléfono registrado en su perfil">
+                                    <i class="fa-brands fa-whatsapp"></i> Sin teléfono
+                                </span>
+                            }
+                            <form asp-controller="EmpresaPasantia" asp-action="CambiarEstadoPostulacion" method="post" class="d-flex align-items-center gap-2">
+                                <input type="hidden" name="postulacionId" value="@c.PostulacionId" />
+                                <input type="hidden" name="pasantiaId" value="@pasantiaId" />
+                                <select name="nuevoEstado" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    @foreach (var e in estados)
+                                    {
+                                        <option value="@e" selected="@(e == c.Estado)">@e</option>
+                                    }
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="collapse" id="entrevista_@c.PostulacionId">
+                        <div class="row g-2 align-items-end py-3" id="form-entrevista-@c.PostulacionId">
+                            @* NOTA: a diferencia de Vacantes, la fecha/lugar de entrevista de
+                               una pasantía todavía no se guarda en base de datos (la tabla
+                               PostulacionesPasantia no tiene esas columnas). Por ahora este
+                               formulario solo arma el mensaje de WhatsApp — si más adelante
+                               quieres que también quede agendada en el sistema (como en
+                               Vacantes), hay que agregar esos campos a la tabla. *@
+                            <div class="col-md-3">
+                                <label class="form-label small mb-0">Fecha y hora</label>
+                                <input type="datetime-local" class="form-control form-control-sm dato-entrevista-pasantia" data-campo="fecha" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-0">Lugar</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista-pasantia" data-campo="lugar" placeholder="Ej. Oficinas centrales" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-0">Dirección</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista-pasantia" data-campo="direccion" placeholder="Ej. Km 5 carretera a Masaya" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-0">Preguntar por</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista-pasantia" data-campo="contacto" placeholder="Ej. Marcela" />
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small mb-0">Nota (opcional)</label>
+                                <input type="text" class="form-control form-control-sm dato-entrevista-pasantia" data-campo="nota" placeholder="Ej. entrevista virtual por Zoom" />
+                            </div>
+                            <div class="col-12">
+                                @if (!string.IsNullOrWhiteSpace(c.Telefono))
+                                {
+                                    <button type="button" class="btn btn-sm btn-whatsapp-entrevista-pasantia" data-telefono="@c.Telefono" data-nombre="@c.NombreCompleto" data-contenedor="form-entrevista-@c.PostulacionId" style="background:#25D366; color:white;">
+                                        <i class="fa-brands fa-whatsapp"></i> Enviar datos por WhatsApp
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="small text-secondary align-self-center">Este candidato no tiene teléfono registrado.</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function telefonoParaWhatsApp(telefono) {
+            const soloDigitos = telefono.replace(/\D/g, '');
+            return '505' + soloDigitos.slice(-8);
+        }
+
+        document.querySelectorAll('.btn-whatsapp-general').forEach(boton => {
+            boton.addEventListener('click', function () {
+                const mensaje = `Hola ${this.dataset.nombre}, te escribimos de ChambeaJobs sobre tu postulación a la pasantía. ¿Tienes un momento para conversar?`;
+                const url = 'https://wa.me/' + telefonoParaWhatsApp(this.dataset.telefono) + '?text=' + encodeURIComponent(mensaje);
+                window.open(url, '_blank');
+            });
+        });
+
+        document.querySelectorAll('.btn-whatsapp-entrevista-pasantia').forEach(boton => {
+            boton.addEventListener('click', function () {
+                const contenedor = document.getElementById(this.dataset.contenedor);
+                const obtener = campo => contenedor.querySelector('[data-campo="' + campo + '"]')?.value?.trim() || '';
+
+                const fechaTexto = obtener('fecha');
+                const fechaFormateada = fechaTexto ? new Date(fechaTexto).toLocaleString('es-NI', { dateStyle: 'full', timeStyle: 'short' }) : '(pendiente de definir)';
+                const lugar = obtener('lugar') || '(pendiente de definir)';
+                const direccion = obtener('direccion') || '(pendiente de definir)';
+                const contacto = obtener('contacto') || '(pendiente de definir)';
+                const nota = obtener('nota');
+
+                let mensaje = `Hola ${this.dataset.nombre}, te escribimos de ChambeaJobs para confirmar tu entrevista de pasantía:\n\n`;
+                mensaje += `Fecha y hora: ${fechaFormateada}\n`;
+                mensaje += `Lugar: ${lugar}\n`;
+                mensaje += `Dirección: ${direccion}\n`;
+                mensaje += `Preguntar por: ${contacto}\n`;
+                if (nota) mensaje += `\nNota adicional: ${nota}\n`;
+                mensaje += `\n¡Te esperamos!`;
+
+                const url = 'https://wa.me/' + telefonoParaWhatsApp(this.dataset.telefono) + '?text=' + encodeURIComponent(mensaje);
+                window.open(url, '_blank');
+            });
+        });
+    </script>
+}

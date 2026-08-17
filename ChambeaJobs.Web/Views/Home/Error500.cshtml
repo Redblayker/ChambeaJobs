@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Error del servidor";
+}
+
+<div class="container py-5 text-center d-flex flex-column align-items-center justify-content-center" style="min-height:70vh;">
+    <div class="d-inline-flex align-items-center justify-content-center mb-4"
+         style="width:88px; height:88px; border-radius:50%; background:#FBE4E4;">
+        <i class="fa-solid fa-triangle-exclamation fa-2x" style="color: var(--color-error);"></i>
+    </div>
+    <h1 class="display-5 fw-bold mb-2">Ocurrió un error</h1>
+    <p class="text-secondary mb-4">Algo salió mal de nuestro lado. Ya estamos trabajando en solucionarlo.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn cj-btn-primary">Volver al inicio</a>
+</div>

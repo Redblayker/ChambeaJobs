@@ -1,0 +1,104 @@
+@model EditarPerfilEmpresaDto
+@{
+    ViewData["Title"] = "Perfil de la empresa";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="cj-card">
+                <h2 class="mb-4">Perfil de la empresa</h2>
+
+                @if (TempData["Exito"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Exito"]</div>
+                }
+
+                <form asp-controller="Empresa" asp-action="Perfil" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreEmpresa" class="form-label">Nombre de la empresa</label>
+                        <input asp-for="NombreEmpresa" class="form-control" />
+                        <span asp-validation-for="NombreEmpresa" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Descripcion" class="form-label">Descripción</label>
+                        <textarea asp-for="Descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SitioWeb" class="form-label">Sitio web</label>
+                        <input asp-for="SitioWeb" class="form-control" placeholder="https://..." />
+                        <span asp-validation-for="SitioWeb" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="UbicacionId" class="form-label">Ubicación</label>
+                        <select asp-for="UbicacionId" class="form-select">
+                            @foreach (var ubicacion in Model.UbicacionesDisponibles)
+                            {
+                                <option value="@ubicacion.Id">@ubicacion.NombreCompleto</option>
+                            }
+                        </select>
+                        <span asp-validation-for="UbicacionId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Logo de la empresa</label>
+                        <!-- Zona clicable: muestra el logo actual (o un ícono de "subir foto" si
+                             todavía no tiene uno) y, al elegir un archivo nuevo, lo previsualiza
+                             al instante — antes esto era un simple <input type="file"> aburrido,
+                             separado de la vista previa. -->
+                        <label for="Logo" class="d-block" style="cursor:pointer; width:140px;">
+                            <div id="zonaLogoPreview" class="d-flex flex-column align-items-center justify-content-center text-center"
+                                 style="width:140px; height:140px; border-radius:var(--radius-md); border:2px dashed var(--color-border); background:var(--color-canvas); overflow:hidden; transition:border-color .15s;">
+                                @if (!string.IsNullOrEmpty(Model.LogoUrlActual))
+                                {
+                                    <img id="imgLogoPreview" src="@Model.LogoUrlActual" style="width:100%; height:100%; object-fit:cover;" alt="Logo actual" />
+                                }
+                                else
+                                {
+                                    <img id="imgLogoPreview" src="" style="width:100%; height:100%; object-fit:cover; display:none;" alt="Logo nuevo" />
+                                    <div id="placeholderLogo">
+                                        <i class="fa-solid fa-camera fa-lg mb-1" style="color:var(--color-slate-soft);"></i>
+                                        <div class="small text-secondary">Subir foto</div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="small text-secondary mt-1 text-center">Clic para cambiar</div>
+                        </label>
+                        <input asp-for="Logo" type="file" id="Logo" class="visually-hidden" accept=".jpg,.jpeg,.png" />
+                        <div class="form-text">JPG o PNG, máx. 2MB. Sube el logo real de tu empresa (ej. si eres "Tigo", sube el logo de Tigo) — se usa en tu perfil público y en tus vacantes.</div>
+                        <span asp-validation-for="Logo" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn cj-btn-primary">Guardar cambios</button>
+                    <a asp-controller="Empresa" asp-action="PerfilExtendido" class="btn cj-btn-outline ms-2" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+                        <i class="fa-solid fa-building me-1"></i>Editar perfil público (historia, cultura, redes...)
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const inputLogo = document.getElementById('Logo');
+        const imgPreview = document.getElementById('imgLogoPreview');
+        const placeholder = document.getElementById('placeholderLogo');
+
+        inputLogo.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            const lector = new FileReader();
+            lector.onload = function (e) {
+                imgPreview.src = e.target.result;
+                imgPreview.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            };
+            lector.readAsDataURL(this.files[0]);
+        });
+    </script>
+}

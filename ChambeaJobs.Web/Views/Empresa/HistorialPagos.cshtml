@@ -1,0 +1,109 @@
+@model List<PagoHistorialDto>
+@{
+    ViewData["Title"] = "Historial de pagos";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Historial de pagos</h2>
+        <a asp-controller="Empresa" asp-action="ComprarPaquete" class="btn cj-btn-primary">Comprar nuevo paquete</a>
+    </div>
+
+    @if (Model.Any())
+    {
+        var totalAprobado = Model.Where(p => p.EstadoPago == "Aprobado").Sum(p => p.Monto);
+        var pendientesCount = Model.Count(p => p.EstadoPago == "Pendiente");
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Total pagado</div>
+                        <div class="cj-estado-sub">$@totalAprobado.ToString("0.00") aprobado</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-sack-dollar"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta @(pendientesCount == 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Pendientes de revisión</div>
+                        <div class="cj-estado-sub">@pendientesCount solicitudes</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(pendientesCount == 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Pagos registrados</div>
+                        <div class="cj-estado-sub">@Model.Count en total</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-receipt"></i></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fa-solid fa-receipt fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+                <p class="small text-secondary mb-0">Aún no has comprado ningún paquete.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+<table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Fecha de compra</th>
+                        <th>Monto</th>
+                        <th>Vacantes</th>
+                        <th>Vencimiento</th>
+                        <th>Estado del paquete</th>
+                        <th>Estado del pago</th>
+                        <th>Referencia</th>
+                        <th class="text-end">Comprobante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pago in Model)
+                    {
+                        <tr>
+                            <td>@pago.FechaCompra.ToString("dd/MM/yyyy")</td>
+                            <td>$@pago.Monto.ToString("0.00")</td>
+                            <td>@pago.VacantesConsumidas / @(pago.VacantesIncluidas?.ToString() ?? "Ilimitado")</td>
+                            <td>@pago.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="cj-badge @(pago.EstadoPaquete == "Vigente" ? "cj-badge-success" : pago.EstadoPaquete == "Pendiente" ? "cj-badge-warning" : "cj-badge-error")">
+                                    @pago.EstadoPaquete
+                                </span>
+                            </td>
+                            <td>
+                                <span class="cj-badge @(pago.EstadoPago == "Aprobado" ? "cj-badge-success" : pago.EstadoPago == "Pendiente" ? "cj-badge-warning" : "cj-badge-error")">
+                                    @pago.EstadoPago
+                                </span>
+                            </td>
+                            <td class="small text-secondary">@pago.ReferenciaTransaccion</td>
+                            <td class="text-end">
+                                @if (pago.EstadoPago == "Aprobado")
+                                {
+                                    <a asp-controller="Empresa" asp-action="DescargarComprobante" asp-route-pagoId="@pago.PagoId" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+                                        <i class="fa-solid fa-file-arrow-down"></i> PDF
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="small text-secondary">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+</div>
+        }
+    </div>
+</div>

@@ -1,0 +1,12 @@
+@{
+    // Sin este archivo, Resultados.cshtml heredaba el _ViewStart raíz
+    // (Layout = "_Layout", el público con barra superior) — por eso se veía
+    // "el diseño anterior" en vez de la barra lateral que ya usa el resto
+    // del sistema para candidatos con sesión iniciada.
+    //
+    // Realizar.cshtml e Invitacion.cshtml NO se ven afectados por este
+    // cambio: ambos sobrescriben esto explícitamente con "Layout = null"
+    // dentro del propio archivo (a propósito, para la experiencia de examen
+    // a pantalla completa sin distracciones).
+    Layout = "_LayoutApp";
+}

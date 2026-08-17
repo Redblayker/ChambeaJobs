@@ -1,0 +1,102 @@
+@model List<UsuarioAdminDto>
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Gestión de Usuarios</h2>
+    <p class="text-secondary mb-4">@Model.Count usuario@(Model.Count == 1 ? "" : "s") registrado@(Model.Count == 1 ? "" : "s") en la plataforma.</p>
+
+    @if (Model.Any())
+    {
+        var activos = Model.Count(u => u.EstadoCuenta);
+        var suspendidos = Model.Count(u => !u.EstadoCuenta);
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Cuentas activas</div>
+                        <div class="cj-estado-sub">@activos usuarios</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-circle-check"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta @(suspendidos == 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Cuentas suspendidas</div>
+                        <div class="cj-estado-sub">@suspendidos usuarios</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(suspendidos == 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Total registrado</div>
+                        <div class="cj-estado-sub">@Model.Count usuarios</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-users"></i></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        <div class="table-responsive">
+<table class="table align-middle">
+            <thead>
+                <tr><th>Usuario</th><th>Rol</th><th>Registrado</th><th>Estado</th><th class="text-end">Acciones</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width:32px; height:32px; border-radius:50%; background:var(--color-primary-100); font-size:0.75rem; font-weight:600; color:var(--color-primary-700);">
+                                    @u.Correo.Substring(0, 1).ToUpper()
+                                </div>
+                                <span>@u.Correo</span>
+                            </div>
+                        </td>
+                        <td><span class="cj-badge cj-badge-info">@u.Rol</span></td>
+                        <td class="text-secondary">@u.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="cj-badge @(u.EstadoCuenta ? "cj-badge-success" : "cj-badge-error")">
+                                @(u.EstadoCuenta ? "Activo" : "Suspendido")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            @if (u.EstadoCuenta)
+                            {
+                                <form asp-controller="Admin" asp-action="SuspenderUsuario" method="post" class="d-inline" onsubmit="return confirm('¿Suspender esta cuenta?');">
+                                    <input type="hidden" name="usuarioId" value="@u.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger">Suspender</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-controller="Admin" asp-action="ActivarUsuario" method="post" class="d-inline">
+                                    <input type="hidden" name="usuarioId" value="@u.Id" />
+                                    <button type="submit" class="btn btn-sm cj-btn-primary">Activar</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+    </div>
+</div>

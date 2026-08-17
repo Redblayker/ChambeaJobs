@@ -1,0 +1,8 @@
+@{
+    // El Centro de Soporte lo puede usar cualquier visitante, tenga cuenta o
+    // no (SoporteController acepta UsuarioActualId nulo a propósito) — por
+    // eso el layout se elige según si hay sesión activa, igual que en
+    // Vacante/Pasantia/Home. Antes forzaba _LayoutApp siempre, lo cual
+    // rompía la barra lateral (basada en roles) para un visitante anónimo.
+    Layout = User.Identity?.IsAuthenticated == true ? "_LayoutApp" : "_Layout";
+}

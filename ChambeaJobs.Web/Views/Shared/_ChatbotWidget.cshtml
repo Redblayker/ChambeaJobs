@@ -1,0 +1,167 @@
+<div id="cj-chatbot-burbuja" class="cj-chatbot-burbuja" title="Chat de asistencia">
+    <i class="fa-solid fa-comment-dots"></i>
+</div>
+
+<div id="cj-chatbot-panel" class="cj-chatbot-panel" style="display:none;">
+    <div class="cj-chatbot-header">
+        <span><i class="fa-solid fa-headset me-1"></i> Chat de asistencia</span>
+        <button type="button" id="cj-chatbot-cerrar" class="btn-close btn-close-white" aria-label="Cerrar"></button>
+    </div>
+    <div id="cj-chatbot-mensajes" class="cj-chatbot-mensajes"></div>
+    <div id="cj-chatbot-boton-soporte-bloque" class="cj-chatbot-boton-soporte-bloque" style="display:none;">
+        <button type="button" id="cj-chatbot-btn-soporte" class="btn cj-btn-primary w-100">
+            <i class="fa-solid fa-headset"></i> Soporte
+        </button>
+    </div>
+    <form id="cj-chatbot-form" class="cj-chatbot-form">
+        <input type="text" id="cj-chatbot-input" class="form-control" placeholder="Escribe tu consulta..." autocomplete="off" />
+        <button type="submit" class="btn cj-btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+</div>
+
+<style>
+    .cj-chatbot-burbuja {
+        position: fixed; bottom: 22px; right: 22px; width: 56px; height: 56px; border-radius: 50%;
+        background: var(--color-primary-700, #1d4ed8); color: #fff; display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.25); z-index: 1050;
+    }
+    .cj-chatbot-panel {
+        position: fixed; bottom: 90px; right: 22px; width: 340px; max-width: 92vw; height: 460px; max-height: 75vh;
+        background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.25); z-index: 1050;
+        display: flex; flex-direction: column; overflow: hidden;
+    }
+    .cj-chatbot-header {
+        background: var(--color-primary-700, #1d4ed8); color: #fff; padding: 12px 14px;
+        display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem;
+    }
+    .cj-chatbot-mensajes { flex: 1; overflow-y: auto; padding: 10px 12px; background: #f5f6fa; }
+    .cj-chatbot-msg { max-width: 85%; padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; font-size: 0.85rem; line-height: 1.35; white-space: pre-line; }
+    .cj-chatbot-msg-bot { background: #fff; border: 1px solid #e5e7eb; border-bottom-left-radius: 2px; }
+    .cj-chatbot-msg-usuario { background: var(--color-primary-700, #1d4ed8); color: #fff; margin-left: auto; border-bottom-right-radius: 2px; }
+    .cj-chatbot-msg a { color: inherit; text-decoration: underline; }
+    .cj-chatbot-boton-soporte-bloque { padding: 10px 12px; border-top: 1px solid #eee; }
+    .cj-chatbot-form { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #eee; }
+    .cj-chatbot-form input { flex: 1; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+    (function () {
+        const burbuja = document.getElementById('cj-chatbot-burbuja');
+        const panel = document.getElementById('cj-chatbot-panel');
+        const cerrar = document.getElementById('cj-chatbot-cerrar');
+        const mensajesDiv = document.getElementById('cj-chatbot-mensajes');
+        const form = document.getElementById('cj-chatbot-form');
+        const input = document.getElementById('cj-chatbot-input');
+        const bloqueSoporte = document.getElementById('cj-chatbot-boton-soporte-bloque');
+        const btnSoporte = document.getElementById('cj-chatbot-btn-soporte');
+
+        let conversacionId = null;
+        let conexionHub = null;
+        let iniciado = false;
+
+        function pintarMensaje(m) {
+            const div = document.createElement('div');
+            div.className = 'cj-chatbot-msg ' + (m.emisor === 'Usuario' ? 'cj-chatbot-msg-usuario' : 'cj-chatbot-msg-bot');
+            div.textContent = m.texto;
+            if (m.urlAccion) {
+                div.appendChild(document.createElement('br'));
+                const a = document.createElement('a');
+                a.href = m.urlAccion;
+                a.textContent = 'Ir ahora →';
+                div.appendChild(a);
+            }
+            mensajesDiv.appendChild(div);
+            mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
+        }
+
+        function mostrarPasoASoporte(ticketId) {
+            bloqueSoporte.style.display = 'none';
+            form.style.display = 'none';
+
+            if (document.getElementById('cj-chatbot-link-soporte')) return; // ya se mostró
+
+            const contenedorLink = document.createElement('div');
+            contenedorLink.id = 'cj-chatbot-link-soporte';
+            contenedorLink.style.padding = '10px 12px';
+            contenedorLink.style.borderTop = '1px solid #eee';
+            const enlace = document.createElement('a');
+            enlace.href = '/Soporte/Chat/' + ticketId;
+            enlace.className = 'btn cj-btn-primary w-100';
+            enlace.innerHTML = '<i class="fa-solid fa-headset"></i> Continuar en el chat de Soporte';
+            contenedorLink.appendChild(enlace);
+            panel.appendChild(contenedorLink);
+        }
+
+        function pintarConversacion(conv) {
+            conversacionId = conv.id;
+            mensajesDiv.innerHTML = '';
+            conv.mensajes.forEach(pintarMensaje);
+
+            if (conv.estado === 'Escalada' && conv.ticketSoporteId) {
+                mostrarPasoASoporte(conv.ticketSoporteId);
+                return;
+            }
+
+            // Solo se ve el mensaje de bienvenida todavía: se muestra el
+            // botón de Soporte como atajo para iniciar la consulta.
+            bloqueSoporte.style.display = conv.mensajes.length <= 1 ? '' : 'none';
+
+            if (conexionHub) {
+                conexionHub.invoke('UnirseAConversacion', conversacionId).catch(() => {});
+            }
+        }
+
+        async function iniciarConversacion() {
+            if (iniciado) return;
+            iniciado = true;
+
+            const respuesta = await fetch('/Chatbot/Iniciar', { method: 'POST' });
+            const conv = await respuesta.json();
+            pintarConversacion(conv);
+
+            conexionHub = new signalR.HubConnectionBuilder().withUrl('/hubs/chatbot').withAutomaticReconnect().build();
+            conexionHub.on('NuevoMensaje', function (m) {
+                pintarMensaje(m);
+            });
+            conexionHub.start().then(function () {
+                conexionHub.invoke('UnirseAConversacion', conversacionId).catch(() => {});
+            }).catch(() => {});
+        }
+
+        function enviarTexto(texto) {
+            if (!texto) return;
+
+            fetch('/Chatbot/EnviarMensaje', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conversacionId: conversacionId, texto: texto })
+            }).then(function (r) { return r.json(); }).then(function (conv) {
+                conversacionId = conv.id;
+                bloqueSoporte.style.display = 'none';
+                if (conv.estado === 'Escalada' && conv.ticketSoporteId) {
+                    mostrarPasoASoporte(conv.ticketSoporteId);
+                }
+            });
+        }
+
+        burbuja.addEventListener('click', function () {
+            panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+            if (panel.style.display === 'flex') iniciarConversacion();
+        });
+
+        cerrar.addEventListener('click', function () { panel.style.display = 'none'; });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const texto = input.value.trim();
+            if (!texto) return;
+            input.value = '';
+            enviarTexto(texto);
+        });
+
+        btnSoporte.addEventListener('click', function () {
+            enviarTexto('Quisiera hablar con soporte.');
+        });
+    })();
+</script>

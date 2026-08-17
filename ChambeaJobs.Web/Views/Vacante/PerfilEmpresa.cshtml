@@ -1,0 +1,230 @@
+@model EmpresaPerfilPublicoDto
+@{
+    ViewData["Title"] = Model.NombreEmpresa;
+    var vacantes = ViewBag.VacantesDeLaEmpresa as List<VacanteListItemDto> ?? new List<VacanteListItemDto>();
+}
+
+<div class="container py-5">
+    <!-- ---------- Cabecera ---------- -->
+    <div class="cj-card p-0 overflow-hidden mb-4">
+        <div style="height:90px; background:linear-gradient(135deg, var(--color-primary-900), var(--color-primary-700));"></div>
+        <div class="d-flex flex-row align-items-start gap-4 flex-wrap px-4 pb-4">
+            @if (!string.IsNullOrEmpty(Model.LogoUrl))
+            {
+                <img src="@Model.LogoUrl" style="width:96px;height:96px;border-radius:16px;object-fit:cover; border:4px solid white; box-shadow:var(--shadow-md); background:white; margin-top:-40px;" />
+            }
+            else
+            {
+                <div class="rounded d-flex align-items-center justify-content-center" style="width:96px;height:96px;border-radius:16px;background:var(--color-primary-100); border:4px solid white; box-shadow:var(--shadow-md); margin-top:-40px;">
+                    <i class="fa-solid fa-building fs-2" style="color:var(--color-primary-700);"></i>
+                </div>
+            }
+            <div class="flex-grow-1 pt-2">
+                <h2 class="mb-1">@Model.NombreEmpresa</h2>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="cj-badge cj-badge-info"><i class="fa-solid fa-location-dot me-1"></i>@Model.UbicacionNombre</span>
+                    @if (!string.IsNullOrEmpty(Model.NumeroColaboradores))
+                    {
+                        <span class="cj-badge cj-badge-info"><i class="fa-solid fa-users me-1"></i>@Model.NumeroColaboradores colaboradores</span>
+                    }
+                    <span class="cj-badge cj-badge-success"><i class="fa-solid fa-briefcase me-1"></i>@Model.VacantesActivas vacante(s) activa(s)</span>
+                </div>
+                <div class="d-flex gap-3">
+                    @if (!string.IsNullOrEmpty(Model.SitioWeb))
+                    {
+                        <a href="@Model.SitioWeb" target="_blank" style="color:var(--color-primary-700);"><i class="fa-solid fa-globe"></i></a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.FacebookUrl))
+                    {
+                        <a href="@Model.FacebookUrl" target="_blank" style="color:var(--color-primary-700);"><i class="fa-brands fa-facebook"></i></a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                    {
+                        <a href="@Model.InstagramUrl" target="_blank" style="color:var(--color-primary-700);"><i class="fa-brands fa-instagram"></i></a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.LinkedInUrl))
+                    {
+                        <a href="@Model.LinkedInUrl" target="_blank" style="color:var(--color-primary-700);"><i class="fa-brands fa-linkedin"></i></a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.TiktokUrl))
+                    {
+                        <a href="@Model.TiktokUrl" target="_blank" style="color:var(--color-primary-700);"><i class="fa-brands fa-tiktok"></i></a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Descripcion))
+    {
+        <div class="cj-card mb-4">
+            <p class="mb-0">@Model.Descripcion</p>
+        </div>
+    }
+
+    <!-- ---------- Galería ---------- -->
+    @if (Model.Galeria.Any())
+    {
+        <div class="cj-card mb-4">
+            <h5 class="mb-3">Galería</h5>
+
+            <div id="carruselGaleriaEmpresa" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    @for (var i = 0; i < Model.Galeria.Count; i++)
+                    {
+                        <button type="button" data-bs-target="#carruselGaleriaEmpresa" data-bs-slide-to="@i"
+                                class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")"
+                                style="background-color:var(--color-accent-500);"></button>
+                    }
+                </div>
+
+                <div class="carousel-inner rounded" style="background:var(--color-white); border:1px solid var(--color-mist);">
+                    @for (var i = 0; i < Model.Galeria.Count; i++)
+                    {
+                        var item = Model.Galeria[i];
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            @if (item.TipoMedio == "Foto")
+                            {
+                                <img src="@item.Url" class="d-block w-100" style="height:380px; object-fit:contain; background:var(--color-white);" />
+                            }
+                            else
+                            {
+                                <video src="@item.Url" class="d-block w-100" style="height:380px; background:#000;" controls></video>
+                            }
+                            @if (!string.IsNullOrEmpty(item.Titulo))
+                            {
+                                <div class="carousel-caption d-none d-md-block" style="background:rgba(11,42,71,0.75); border-radius:var(--radius-sm); padding:6px 12px;">
+                                    <p class="mb-0 small">@item.Titulo</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Galeria.Count > 1)
+                {
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carruselGaleriaEmpresa" data-bs-slide="prev">
+                        <span class="d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:50%;background:var(--color-primary-700);">
+                            <i class="fa-solid fa-chevron-left" style="color:white;"></i>
+                        </span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carruselGaleriaEmpresa" data-bs-slide="next">
+                        <span class="d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:50%;background:var(--color-primary-700);">
+                            <i class="fa-solid fa-chevron-right" style="color:white;"></i>
+                        </span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ---------- Historia, Misión, Visión y cultura ---------- -->
+    @if (!string.IsNullOrEmpty(Model.Historia))
+    {
+        <div class="cj-card mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                    <i class="fa-solid fa-book-open" style="color:var(--color-accent-700);"></i>
+                </div>
+                <h5 class="mb-0">Nuestra historia</h5>
+            </div>
+            <p class="mb-0" style="white-space:pre-line;">@Model.Historia</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Mision) || !string.IsNullOrEmpty(Model.Vision))
+    {
+        <div class="row mb-4">
+            @if (!string.IsNullOrEmpty(Model.Mision))
+            {
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="cj-card h-100">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-primary-100);">
+                                <i class="fa-solid fa-bullseye" style="color:var(--color-primary-700);"></i>
+                            </div>
+                            <h5 class="mb-0">Misión</h5>
+                        </div>
+                        <p class="mb-0" style="white-space:pre-line;">@Model.Mision</p>
+                    </div>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Vision))
+            {
+                <div class="col-md-6">
+                    <div class="cj-card h-100">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-primary-100);">
+                                <i class="fa-solid fa-eye" style="color:var(--color-primary-700);"></i>
+                            </div>
+                            <h5 class="mb-0">Visión</h5>
+                        </div>
+                        <p class="mb-0" style="white-space:pre-line;">@Model.Vision</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.CulturaOrganizacional))
+    {
+        <div class="cj-card mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                    <i class="fa-solid fa-people-group" style="color:var(--color-accent-700);"></i>
+                </div>
+                <h5 class="mb-0">Cultura organizacional</h5>
+            </div>
+            <p class="mb-0" style="white-space:pre-line;">@Model.CulturaOrganizacional</p>
+        </div>
+    }
+
+    @if (Model.Beneficios.Any())
+    {
+        <div class="cj-card mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-primary-100);">
+                    <i class="fa-solid fa-gift" style="color:var(--color-primary-700);"></i>
+                </div>
+                <h5 class="mb-0">Beneficios</h5>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var beneficio in Model.Beneficios)
+                {
+                    <span class="cj-badge cj-badge-info">@beneficio</span>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ---------- Vacantes activas ---------- -->
+    <div class="cj-card">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                <i class="fa-solid fa-briefcase" style="color:var(--color-accent-700);"></i>
+            </div>
+            <h5 class="mb-0">Vacantes activas (@vacantes.Count)</h5>
+        </div>
+        @if (!vacantes.Any())
+        {
+            <p class="small text-secondary mb-0">Esta empresa no tiene vacantes activas en este momento.</p>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-2">
+                @foreach (var v in vacantes)
+                {
+                    <a asp-controller="Vacante" asp-action="Detalle" asp-route-id="@v.Id" class="d-flex justify-content-between align-items-center py-2 border-bottom text-decoration-none" style="color:var(--color-text);">
+                        <div>
+                            <div class="fw-semibold">@v.Titulo</div>
+                            <div class="small text-secondary">@v.CategoriaNombre</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right small text-secondary"></i>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,70 @@
+@model List<CrmEmpresaListItemDto>
+@using ChambeaJobs.Domain.Enums
+@{
+    ViewData["Title"] = "CRM - Empresas";
+    var etapaSeleccionada = ViewBag.EtapaSeleccionada as EtapaPipelineCrm?;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Empresas (CRM)</h2>
+    <div class="d-flex gap-2">
+        <a asp-action="FasesProcesoComercial" class="btn cj-btn-outline"><i class="fa-solid fa-table-columns"></i> Ver fases</a>
+        <a asp-action="Nueva" class="btn cj-btn-primary"><i class="fa-solid fa-plus"></i> Nueva empresa</a>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="busqueda" value="@ViewBag.Busqueda" class="form-control" placeholder="Buscar por nombre, contacto o correo..." style="min-width:280px;" />
+    </div>
+    <div class="col-auto">
+        <select name="etapa" class="form-select">
+            <option value="">Todas las etapas</option>
+            @foreach (EtapaPipelineCrm e in Enum.GetValues(typeof(EtapaPipelineCrm)))
+            {
+                <option value="@((int)e)" selected="@(etapaSeleccionada == e)">@e</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn cj-btn-outline"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+    </div>
+</form>
+
+<div class="cj-card p-0">
+    <table class="table table-hover mb-0 align-middle">
+        <thead>
+            <tr>
+                <th>Empresa</th>
+                <th>Etapa</th>
+                <th>Contacto</th>
+                <th>Correo</th>
+                <th>Última actividad</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td>
+                        @e.NombreEmpresa
+                        @if (e.EstaRegistradaEnPlataforma)
+                        {
+                            <span class="badge bg-success-subtle text-success ms-1">Registrada</span>
+                        }
+                    </td>
+                    <td><span class="badge bg-secondary-subtle text-secondary">@e.Etapa</span></td>
+                    <td>@e.ContactoPrincipal</td>
+                    <td>@e.Correo</td>
+                    <td>@(e.FechaUltimaActividad?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td class="text-end"><a asp-action="Detalle" asp-route-id="@e.Id" class="btn btn-sm cj-btn-outline">Ver</a></td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" class="text-center text-secondary py-4">No hay empresas que coincidan con el filtro.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

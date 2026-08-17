@@ -1,0 +1,206 @@
+@model VacanteFormDto
+@{
+    ViewData["Title"] = "Publicar vacante";
+    var estadoPaquete = ViewBag.EstadoPaquete as PaqueteEstadoDto;
+    var puedePublicar = estadoPaquete?.PuedePublicar ?? false;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:44px; height:44px; border-radius:var(--radius-md); background:var(--color-accent-100);">
+                    <i class="fa-solid fa-plus" style="color:var(--color-accent-500);"></i>
+                </div>
+                <h2 class="mb-0">Publicar vacante</h2>
+            </div>
+
+            @if (!puedePublicar)
+            {
+                <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>No tienes cupo disponible en tu paquete de publicación. Compra o renueva tu paquete para poder publicar.</span>
+                    <a asp-controller="Empresa" asp-action="ComprarPaquete" class="btn cj-btn-primary btn-sm">Comprar paquete</a>
+                </div>
+            }
+            else if (estadoPaquete != null)
+            {
+                <div class="alert alert-info">
+                    @if (estadoPaquete.VacantesDisponibles.HasValue)
+                    {
+                        <text>Te quedan <strong>@estadoPaquete.VacantesDisponibles</strong> vacante(s) disponibles en tu paquete actual.</text>
+                    }
+                    else
+                    {
+                        <text>Tu plan actual tiene <strong>vacantes ilimitadas</strong>.</text>
+                    }
+                </div>
+            }
+
+            <div class="cj-card">
+                <form asp-controller="Empresa" asp-action="PublicarVacante" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Titulo" class="form-label">Título del puesto</label>
+                        <input asp-for="Titulo" class="form-control" />
+                        <span asp-validation-for="Titulo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CategoriaId" class="form-label">Categoría</label>
+                            <select asp-for="CategoriaId" id="selectCategoriaVacante" class="form-select">
+                                <option value="">Selecciona...</option>
+                                @foreach (var c in Model.CategoriasDisponibles)
+                                {
+                                    <option value="@c.Id">@c.Nombre</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoriaId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CarreraId" class="form-label">Carrera específica <span class="text-secondary fw-normal">(opcional)</span></label>
+                            <select asp-for="CarreraId" id="selectCarreraVacante" class="form-select" disabled>
+                                <option value="">Primero selecciona una categoría...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="UbicacionId" class="form-label">Ubicación</label>
+                            <select asp-for="UbicacionId" class="form-select">
+                                <option value="">Selecciona...</option>
+                                @foreach (var u in Model.UbicacionesDisponibles)
+                                {
+                                    <option value="@u.Id">@u.NombreCompleto</option>
+                                }
+                            </select>
+                            <span asp-validation-for="UbicacionId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Modalidad" class="form-label">Modalidad</label>
+                            <select asp-for="Modalidad" class="form-select">
+                                <option value="">Selecciona...</option>
+                                <option value="Presencial">Presencial</option>
+                                <option value="Remoto">Remoto</option>
+                                <option value="Híbrido">Híbrido</option>
+                            </select>
+                            <span asp-validation-for="Modalidad" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ExperienciaRequerida" class="form-label">Experiencia requerida</label>
+                            <select asp-for="ExperienciaRequerida" class="form-select">
+                                <option value="">Selecciona...</option>
+                                @foreach (var opcion in ChambeaJobs.Domain.Entities.ExperienciaRequeridaOpciones.Todas)
+                                {
+                                    <option value="@opcion">@opcion</option>
+                                }
+                            </select>
+                            <span asp-validation-for="ExperienciaRequerida" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Descripcion" class="form-label">Descripción</label>
+                        <textarea asp-for="Descripcion" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Requisitos" class="form-label">Requisitos</label>
+                        <textarea asp-for="Requisitos" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SalarioMin" class="form-label">Salario mínimo (opcional)</label>
+                            <input asp-for="SalarioMin" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="SalarioMin" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SalarioMax" class="form-label">Salario máximo (opcional)</label>
+                            <input asp-for="SalarioMax" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="SalarioMax" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="FechaCierre" class="form-label">Fecha de cierre</label>
+                        <input asp-for="FechaCierre" type="date" class="form-control" value="@Model.FechaCierre.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="FechaCierre" class="text-danger small"></span>
+                    </div>
+
+                    @if (estadoPaquete?.PermiteVacantesDestacadas == true)
+                    {
+                        <div class="cj-card mb-4" style="background:#FBF1DD;">
+                            <div class="form-check">
+                                <input asp-for="EsDestacada" class="form-check-input" />
+                                <label asp-for="EsDestacada" class="form-check-label">
+                                    <i class="fa-solid fa-star" style="color:#C77D0A;"></i> Marcar como <strong>destacada</strong> (aparece primero en las búsquedas)
+                                </label>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light small border mb-4">
+                            <i class="fa-solid fa-star text-secondary"></i> Las vacantes destacadas están disponibles en el <strong>Plan Empresarial</strong>.
+                            <a asp-controller="Empresa" asp-action="ComprarPaquete">Ver planes</a>.
+                        </div>
+                    }
+
+                    <button type="submit" class="btn cj-btn-primary w-100" @(puedePublicar ? "" : "disabled")>
+                        Publicar vacante
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const selectCategoriaVacante = document.getElementById('selectCategoriaVacante');
+        const selectCarreraVacante = document.getElementById('selectCarreraVacante');
+
+        async function cargarCarrerasVacante(categoriaId, carreraSeleccionadaId) {
+            if (!categoriaId) {
+                selectCarreraVacante.innerHTML = '<option value="">Primero selecciona una categoría...</option>';
+                selectCarreraVacante.disabled = true;
+                return;
+            }
+            selectCarreraVacante.innerHTML = '<option value="">Cargando...</option>';
+            selectCarreraVacante.disabled = true;
+            try {
+                const respuesta = await fetch('/Empresa/ObtenerCarreras?categoriaId=' + categoriaId);
+                const carreras = await respuesta.json();
+                selectCarreraVacante.innerHTML = '<option value="">Ninguna en particular</option>';
+                carreras.forEach(function (c) {
+                    const opcion = document.createElement('option');
+                    opcion.value = c.id;
+                    opcion.textContent = c.nombre;
+                    if (carreraSeleccionadaId && String(c.id) === String(carreraSeleccionadaId)) {
+                        opcion.selected = true;
+                    }
+                    selectCarreraVacante.appendChild(opcion);
+                });
+                selectCarreraVacante.disabled = carreras.length === 0;
+                if (carreras.length === 0) {
+                    selectCarreraVacante.innerHTML = '<option value="">Sin carreras específicas registradas en esta categoría</option>';
+                }
+            } catch (err) {
+                selectCarreraVacante.innerHTML = '<option value="">No se pudo cargar la lista</option>';
+            }
+        }
+
+        if (selectCategoriaVacante && selectCarreraVacante) {
+            selectCategoriaVacante.addEventListener('change', function () {
+                cargarCarrerasVacante(this.value, null);
+            });
+        }
+    </script>
+}

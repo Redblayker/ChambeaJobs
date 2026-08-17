@@ -1,0 +1,47 @@
+@model List<PeriodoFinancieroDto>
+@{
+    ViewData["Title"] = "Períodos - Finanzas";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0" style="font-size:1.3rem;">Períodos financieros</h2>
+            <p class="text-secondary small mb-0">Un período cerrado ya no admite modificaciones directas — solo ajustes autorizados.</p>
+        </div>
+        <a asp-action="Dashboard" class="btn cj-btn-outline btn-sm">← Dashboard</a>
+    </div>
+
+    @if (TempData["Exito"] != null) { <div class="alert alert-success">@TempData["Exito"]</div> }
+
+    <div class="cj-card p-0">
+        <table class="table table-hover mb-0 align-middle" style="font-size:0.85rem;">
+            <thead><tr><th>Período</th><th>Tipo</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>@p.Nombre</td>
+                        <td>@p.Tipo</td>
+                        <td class="text-success">$@p.TotalIngresos.ToString("0.00")</td>
+                        <td class="text-danger">$@p.TotalGastos.ToString("0.00")</td>
+                        <td class="fw-bold">$@((p.TotalIngresos - p.TotalGastos).ToString("0.00"))</td>
+                        <td>
+                            @if (p.Cerrado) { <span class="badge bg-secondary-subtle text-secondary"><i class="fa-solid fa-lock"></i> Cerrado</span> }
+                            else { <span class="badge bg-success-subtle text-success">Abierto</span> }
+                        </td>
+                        <td>
+                            @if (!p.Cerrado && (User.IsInRole("SuperAdministrador") || User.IsInRole("AdministradorFinanciero")))
+                            {
+                                <form asp-action="CerrarPeriodo" asp-route-id="@p.Id" method="post" onsubmit="return confirm('¿Cerrar este período? No se podrán editar sus movimientos directamente después.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Cerrar período</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

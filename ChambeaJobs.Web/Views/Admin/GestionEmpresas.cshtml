@@ -1,0 +1,72 @@
+@model List<EmpresaAdminDto>
+@{
+    ViewData["Title"] = "Gestión de Empresas";
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Gestión de Empresas</h2>
+    <p class="text-secondary mb-4">@Model.Count empresa@(Model.Count == 1 ? "" : "s") registrada@(Model.Count == 1 ? "" : "s").</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        <div class="table-responsive">
+<table class="table align-middle">
+            <thead>
+                <tr><th>Empresa</th><th>Correo</th><th>Paquete</th><th>Vacantes activas</th><th>Estado cuenta</th><th class="text-end">Acciones</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width:32px; height:32px; border-radius:var(--radius-sm); background:var(--color-accent-100);">
+                                    <i class="fa-solid fa-building" style="color:var(--color-accent-500); font-size:0.8rem;"></i>
+                                </div>
+                                <span class="fw-semibold">@e.NombreEmpresa</span>
+                            </div>
+                        </td>
+                        <td class="text-secondary">@e.Correo</td>
+                        <td>
+                            <span class="cj-badge @(e.EstadoPaquete == "Vigente" ? "cj-badge-success" : e.EstadoPaquete == "Pendiente" ? "cj-badge-warning" : "cj-badge-info")">
+                                @e.EstadoPaquete
+                            </span>
+                        </td>
+                        <td>@e.VacantesActivas</td>
+                        <td>
+                            <span class="cj-badge @(e.EstadoCuenta ? "cj-badge-success" : "cj-badge-error")">
+                                @(e.EstadoCuenta ? "Activa" : "Suspendida")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            @if (e.EstadoCuenta)
+                            {
+                                <form asp-controller="Admin" asp-action="SuspenderEmpresa" method="post" class="d-inline" onsubmit="return confirm('¿Suspender esta empresa?');">
+                                    <input type="hidden" name="usuarioId" value="@e.UsuarioId" />
+                                    <button type="submit" class="btn btn-sm text-danger">Suspender</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-controller="Admin" asp-action="ActivarEmpresa" method="post" class="d-inline">
+                                    <input type="hidden" name="usuarioId" value="@e.UsuarioId" />
+                                    <button type="submit" class="btn btn-sm cj-btn-primary">Activar</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+    </div>
+</div>

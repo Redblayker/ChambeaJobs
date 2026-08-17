@@ -1,0 +1,125 @@
+/* Tema exclusivo del CRM: misma paleta de siempre (azul/naranja), solo con
+   una distribución más ordenada — sidebar propio del CRM, topbar con
+   buscador, contenido en tarjetas bien definidas. Nada de fondo oscuro. */
+
+.cj-crm-body { margin: 0; background: #F7F8FA; }
+
+.cj-crm-shell { display: flex; min-height: 100vh; }
+
+.cj-crm-sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid var(--color-border, #E5E8EC);
+  color: var(--color-text, #1f2937);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 0;
+}
+
+.cj-crm-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px 20px;
+  color: var(--color-primary-700, #14497A); text-decoration: none; font-family: 'Poppins', sans-serif; font-weight: 700;
+  border-bottom: 1px solid var(--color-border, #E5E8EC);
+  margin-bottom: 14px;
+}
+.cj-crm-logo img { width: 28px; height: 28px; border-radius: 6px; }
+.cj-crm-logo b { color: var(--color-accent-500, #F0661E); }
+
+.cj-crm-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
+
+.cj-crm-nav-titulo {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--color-slate-soft, #8892A0); padding: 14px 10px 4px;
+}
+
+.cj-crm-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  color: var(--color-text, #374151); text-decoration: none; font-size: 0.85rem; font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: background .15s ease, border-color .15s ease;
+}
+.cj-crm-nav-item i { width: 18px; text-align: center; color: var(--color-slate-soft, #8892A0); }
+.cj-crm-nav-item:hover { background: var(--color-mist-soft, #F1F3F5); }
+.cj-crm-nav-item.activo { background: var(--color-mist-soft, #F1F3F5); border-left-color: var(--color-accent-500, #F0661E); color: var(--color-primary-700, #14497A); font-weight: 700; }
+.cj-crm-nav-item.activo i { color: var(--color-accent-500, #F0661E); }
+
+.cj-crm-sidebar-footer {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 0; margin-top: 12px;
+  border-top: 1px solid var(--color-border, #E5E8EC);
+}
+.cj-crm-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--color-primary-700, #14497A); color: #fff; font-weight: 700; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.cj-crm-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.cj-crm-topbar {
+  height: 60px; flex-shrink: 0; background: #fff;
+  border-bottom: 1px solid var(--color-border, #E5E8EC);
+  display: flex; align-items: center; gap: 16px; padding: 0 24px;
+}
+.cj-crm-buscador {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--color-mist-soft, #F1F3F5); border-radius: 10px; padding: 8px 16px; width: 300px;
+  color: var(--color-slate-soft, #8892A0); text-decoration: none; font-size: 0.85rem;
+}
+
+.cj-crm-main { flex: 1; padding: 16px 20px; overflow-x: hidden; font-size: 0.92rem; }
+.cj-crm-main h2 { font-size: 1.35rem; margin-bottom: 2px; }
+.cj-crm-main .small, .cj-crm-main small { font-size: 0.76rem; }
+.cj-crm-main .btn { font-size: 0.82rem; padding: 6px 14px; }
+
+/* ---------- Estructura común para las páginas del CRM ---------- */
+
+.cj-crm-metricas-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.cj-crm-metrica-card {
+  background: #fff; border: 1px solid var(--color-border, #E5E8EC); border-radius: 10px;
+  padding: 10px 12px; border-left: 4px solid var(--color-primary-700, #14497A);
+}
+.cj-crm-metrica-card .valor { font-size: 1.25rem; font-weight: 700; line-height: 1.1; color: var(--color-text, #1f2937); }
+.cj-crm-metrica-card .label { font-size: 0.68rem; color: var(--color-slate-soft, #8892A0); margin-top: 2px; }
+
+.cj-crm-panel-grafico {
+  background: #fff; border: 1px solid var(--color-border, #E5E8EC); border-radius: 10px;
+  padding: 12px 14px; height: 100%;
+}
+.cj-crm-panel-grafico h6 {
+  font-size: 0.78rem; font-weight: 700; color: var(--color-text, #1f2937);
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border, #E5E8EC);
+}
+.cj-crm-panel-grafico .cj-crm-canvas-caja { position: relative; height: 200px; }
+.cj-crm-canvas-caja { position: relative; height: 180px; }
+
+.cj-crm-seccion { background: #fff; border: 1px solid var(--color-border, #E5E8EC); border-radius: 10px; padding: 12px 16px; }
+.cj-crm-seccion-titulo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.82rem; color: var(--color-text, #1f2937); }
+.cj-crm-seccion-icono { width: 7px; height: 7px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+.cj-crm-stat-fila { display: flex; align-items: center; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--color-border, #E5E8EC); }
+.cj-crm-stat-fila:last-child { border-bottom: none; }
+.cj-crm-stat-fila i { width: 16px; text-align: center; font-size: 0.85rem; }
+.cj-crm-stat-valor { font-size: 0.95rem; font-weight: 700; line-height: 1.1; }
+.cj-crm-stat-label { font-size: 0.66rem; color: var(--color-slate-soft, #8892A0); }
+
+.cj-crm-leyenda { list-style: none; margin: 0; padding: 0; }
+.cj-crm-leyenda li { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 0.78rem; }
+.cj-crm-leyenda-punto { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cj-crm-leyenda-texto { flex: 1; color: var(--color-text, #374151); }
+.cj-crm-leyenda-pct { font-weight: 700; color: var(--color-slate-soft, #8892A0); }
+
+/* Formularios (Nueva empresa / Editar) dentro del CRM: más compactos. */
+.cj-crm-main label.form-label { font-size: 0.78rem; margin-bottom: 3px; }
+.cj-crm-main .form-control, .cj-crm-main .form-select { font-size: 0.85rem; padding: 6px 10px; }
+.cj-crm-main textarea.form-control { font-size: 0.85rem; }
+
+@media (max-width: 900px) {
+  .cj-crm-sidebar { width: 64px; }
+  .cj-crm-sidebar .cj-crm-logo span, .cj-crm-nav-item span, .cj-crm-nav-titulo, .cj-crm-sidebar-footer .flex-grow-1 { display: none; }
+  .cj-crm-nav-item { justify-content: center; }
+  .cj-crm-buscador { width: auto; }
+}

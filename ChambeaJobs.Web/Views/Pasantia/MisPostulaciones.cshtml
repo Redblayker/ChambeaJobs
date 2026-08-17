@@ -1,0 +1,41 @@
+@model List<PostulacionPasantiaCandidatoDto>
+@{
+    ViewData["Title"] = "Mis postulaciones a pasantías";
+}
+
+<div class="container py-5">
+    <div class="d-flex align-items-center gap-3 mb-1">
+        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px; border-radius:var(--radius-md); background:#F3EBFB;">
+            <i class="fa-solid fa-graduation-cap" style="color:#7C3AED;"></i>
+        </div>
+        <h2 class="mb-0">Mis Postulaciones a Pasantías</h2>
+    </div>
+    <p class="text-secondary mb-4">@Model.Count postulación@(Model.Count == 1 ? "" : "es") a pasantías.</p>
+
+    @if (!Model.Any())
+    {
+        <div class="cj-card text-center py-5">
+            <i class="fa-solid fa-inbox fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+            <p class="small text-secondary mb-0">Aún no te has postulado a ninguna pasantía. <a asp-controller="Pasantia" asp-action="Buscar">Buscar pasantías</a>.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-2">
+            @foreach (var p in Model)
+            {
+                <div class="cj-card" style="border-left: 3px solid #7C3AED;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h5 class="mb-1">@p.PasantiaTitulo</h5>
+                            <div class="small text-secondary">@p.EmpresaNombre — Postulado el @p.FechaPostulacion.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <span class="cj-badge @(p.Estado == "Aceptado" ? "cj-badge-success" : p.Estado == "Rechazado" ? "cj-badge-error" : "cj-badge-warning")">
+                            @p.Estado
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

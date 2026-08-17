@@ -1,0 +1,182 @@
+@model List<PostulacionCandidatoDto>
+@{
+    ViewData["Title"] = "Mis postulaciones";
+    var evaluaciones = ViewBag.Evaluaciones as Dictionary<int, EvaluacionResumenDto> ?? new();
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Mis postulaciones</h2>
+    <p class="text-secondary mb-4">@Model.Count postulación@(Model.Count == 1 ? "" : "es") activa@(Model.Count == 1 ? "" : "s").</p>
+
+    @if (Model.Any())
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Postulaciones</div>
+                        <div class="cj-estado-sub">@Model.Count en total</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-file-lines"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                @{
+                    var entrevistasPendientes = Model.Count(p => p.Etapa == "EntrevistaPendiente");
+                }
+                <div class="cj-estado-tarjeta @(entrevistasPendientes == 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Entrevistas pendientes</div>
+                        <div class="cj-estado-sub">@entrevistasPendientes por confirmar</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(entrevistasPendientes == 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                @{
+                    var pruebasSinResponder = Model.Count(p => p.PruebaPsicometricaAprobada == null && evaluaciones.ContainsKey(p.Id) && evaluaciones[p.Id].Estado == "Pendiente");
+                }
+                <div class="cj-estado-tarjeta @(pruebasSinResponder == 0 ? "bien" : "alerta")">
+                    <div>
+                        <div class="cj-estado-titulo">Evaluaciones sin responder</div>
+                        <div class="cj-estado-sub">@pruebasSinResponder pendientes</div>
+                    </div>
+                    <div class="cj-estado-carita">@Html.Raw(pruebasSinResponder == 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="cj-card text-center py-5">
+            <i class="fa-solid fa-inbox fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+            <p class="small text-secondary mb-0">Aún no te has postulado a ninguna vacante. <a asp-controller="Vacante" asp-action="Buscar">Busca vacantes</a>.</p>
+        </div>
+    }
+    else
+    {
+        @* Tarjetas compactas: una sola línea con lo esencial + un botón para
+           desplegar el detalle completo del seguimiento solo si el usuario
+           lo pide. Antes cada tarjeta mostraba las 6 líneas del checklist
+           siempre abiertas, lo que hacía la lista enorme con 3+ postulaciones. *@
+        <div class="cj-card p-0 overflow-hidden">
+            @foreach (var p in Model)
+            {
+                var rechazado = p.Etapa == "Rechazado";
+                var contratado = p.Etapa == "Contratacion";
+                var claseBadge = p.Estado switch
+                {
+                    "Contratado" => "cj-badge-success",
+                    "Rechazado" => "cj-badge-error",
+                    "En revisión" or "Entrevista" => "cj-badge-warning",
+                    _ => "cj-badge-info"
+                };
+
+                var evaluacion = evaluaciones.TryGetValue(p.Id, out var ev) ? ev : null;
+                string etapaActualTexto;
+                string etapaActualIcono;
+                if (contratado) { etapaActualTexto = "¡Contratado!"; etapaActualIcono = "fa-solid fa-circle-check"; }
+                else if (rechazado) { etapaActualTexto = "No avanzó en esta ocasión"; etapaActualIcono = "fa-solid fa-circle-xmark"; }
+                else if (p.EntrevistaProgramada && p.FechaEntrevista.HasValue) { etapaActualTexto = $"Entrevista: {p.FechaEntrevista.Value:dd/MM/yyyy HH:mm}"; etapaActualIcono = "fa-solid fa-clock"; }
+                else if (evaluacion?.Estado == "Pendiente") { etapaActualTexto = "Evaluación psicométrica pendiente"; etapaActualIcono = "fa-solid fa-clock"; }
+                else if (p.CvRevisado) { etapaActualTexto = "CV revisado, en proceso"; etapaActualIcono = "fa-solid fa-magnifying-glass"; }
+                else { etapaActualTexto = "Aplicación enviada"; etapaActualIcono = "fa-regular fa-circle"; }
+
+                <div class="border-bottom">
+                    <div class="d-flex justify-content-between align-items-center gap-3 p-3 flex-wrap"
+                         style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#seguimiento_@p.Id">
+                        @if (!string.IsNullOrEmpty(p.EmpresaLogoUrl))
+                        {
+                            <img src="@p.EmpresaLogoUrl" style="width:40px; height:40px; border-radius:var(--radius-sm); object-fit:contain; background:white; border:1px solid var(--color-mist); padding:3px; flex-shrink:0;" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px; border-radius:var(--radius-sm); background:var(--color-primary-100);">
+                                <i class="fa-solid fa-building small" style="color:var(--color-primary-700);"></i>
+                            </div>
+                        }
+                        <div class="flex-grow-1" style="min-width:200px;">
+                            <a asp-controller="Vacante" asp-action="Detalle" asp-route-id="@p.VacanteId"
+                               class="fw-semibold text-decoration-none" style="color:var(--color-text);"
+                               onclick="event.stopPropagation()">@p.VacanteTitulo</a>
+                            <div class="small text-secondary">@p.EmpresaNombre</div>
+                        </div>
+                        <div class="small text-secondary d-none d-md-block" style="min-width:170px;">
+                            <i class="@etapaActualIcono me-1"></i>@etapaActualTexto
+                        </div>
+                        <span class="cj-badge @claseBadge">@p.Estado</span>
+                        <i class="fa-solid fa-chevron-down small text-secondary"></i>
+                    </div>
+
+                    @if (!rechazado)
+                    {
+                        <div class="collapse" id="seguimiento_@p.Id">
+                            <div class="small px-3 pb-3 d-flex flex-column gap-2">
+                                <div><i class="fa-solid fa-circle-check me-2" style="color:var(--color-success);"></i>Aplicación enviada</div>
+                                <div><i class="@(p.CvRevisado ? "fa-solid fa-circle-check" : "fa-regular fa-circle") me-2" style="color:@(p.CvRevisado ? "var(--color-success)" : "var(--color-slate-soft)");"></i>CV revisado</div>
+                                <div><i class="@(p.VideoCvVisto ? "fa-solid fa-circle-check" : "fa-regular fa-circle") me-2" style="color:@(p.VideoCvVisto ? "var(--color-success)" : "var(--color-slate-soft)");"></i>Video Currículum visto</div>
+                                <div>
+                                    @if (p.PruebaPsicometricaAprobada == true)
+                                    {
+                                        <i class="fa-solid fa-circle-check me-2" style="color:var(--color-success);"></i><text>Evaluación psicométrica aprobada (@p.PruebaPsicometricaPuntaje/100)</text>
+                                    }
+                                    else if (p.PruebaPsicometricaAprobada == false)
+                                    {
+                                        <i class="fa-solid fa-circle-check me-2" style="color:var(--color-success);"></i><text>Evaluación psicométrica respondida (@p.PruebaPsicometricaPuntaje/100, no aprobada)</text>
+                                    }
+                                    else if (evaluacion is null || evaluacion.Estado == "Sin enviar")
+                                    {
+                                        <i class="fa-regular fa-circle me-2" style="color:var(--color-slate-soft);"></i><text>Sin evaluación psicométrica solicitada todavía</text>
+                                    }
+                                    else if (evaluacion.Estado == "Pendiente")
+                                    {
+                                        <i class="fa-solid fa-clock me-2" style="color:var(--color-warning);"></i><text>Evaluación psicométrica pendiente</text>
+                                        <a asp-controller="Evaluacion" asp-action="Invitacion" asp-route-id="@evaluacion.EvaluacionId" class="btn btn-sm cj-btn-primary py-0 px-2 ms-2">
+                                            Responder ahora
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid fa-circle-xmark me-2" style="color:var(--color-error);"></i><text>Evaluación psicométrica vencida</text>
+                                    }
+                                </div>
+                                <div>
+                                    @if (p.EntrevistaProgramada && p.FechaEntrevista.HasValue)
+                                    {
+                                        <i class="fa-solid fa-clock me-2" style="color:var(--color-warning);"></i><text>Entrevista programada: @p.FechaEntrevista.Value.ToString("dd/MM/yyyy HH:mm")</text>
+                                        <a asp-controller="Candidato" asp-action="VideoEntrevista" asp-route-postulacionId="@p.Id" class="btn btn-sm ms-2" style="background:#7C3AED; color:white;" target="_blank">
+                                            <i class="fa-solid fa-video"></i> Entrar a la videollamada
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-regular fa-circle me-2" style="color:var(--color-slate-soft);"></i><text>Entrevista pendiente de agendar</text>
+                                    }
+                                </div>
+                                <div><i class="@(contratado ? "fa-solid fa-circle-check" : "fa-regular fa-circle") me-2" style="color:@(contratado ? "var(--color-success)" : "var(--color-slate-soft)");"></i>Contratación</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <style>
+        /* Gira el ícono de flecha cuando la tarjeta está expandida, como pista visual. */
+        [data-bs-toggle="collapse"] .fa-chevron-down { transition: transform .2s ease; }
+        [data-bs-toggle="collapse"][aria-expanded="true"] .fa-chevron-down { transform: rotate(180deg); }
+    </style>
+}

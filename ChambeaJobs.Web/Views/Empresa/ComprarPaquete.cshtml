@@ -1,0 +1,83 @@
+@model RegistrarPagoDto
+@{
+    ViewData["Title"] = "Comprar paquete";
+    var estadoPaquete = ViewBag.EstadoPaquete as PaqueteEstadoDto;
+    var planes = ViewBag.PlanesDisponibles as List<PlanSuscripcionOptionDto> ?? new();
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <h2 class="mb-1">Elige tu plan</h2>
+            <p class="text-secondary mb-4">Selecciona el plan que mejor se ajuste a cuántas vacantes publicas al mes.</p>
+
+            @if (estadoPaquete != null && estadoPaquete.Estado == "Pendiente")
+            {
+                <div class="alert alert-warning">
+                    Ya tienes una solicitud de pago en revisión. Espera la aprobación antes de registrar otra.
+                </div>
+            }
+            else
+            {
+                <form asp-controller="Empresa" asp-action="ComprarPaquete" method="post" id="form-comprar-paquete">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row g-3 mb-4">
+                        @foreach (var plan in planes)
+                        {
+                            <div class="col-md-6">
+                                <label class="cj-card p-3 d-block h-100" style="cursor:pointer; border-width:2px; position:relative;"
+                                       onclick="document.getElementById('monto-a-pagar').textContent = '@plan.Precio.ToString("0")';">
+                                    <input type="radio" name="PlanSuscripcionId" value="@plan.Id" class="form-check-input me-2" required
+                                           onchange="document.getElementById('monto-a-pagar').textContent = '@plan.Precio.ToString("0")';" />
+                                    <span class="fw-semibold">@plan.Nombre</span>
+                                    <div class="fs-2 fw-bold mt-1" style="color:var(--color-accent-500);">
+                                        $@plan.Precio.ToString("0")<span class="fs-6 fw-normal text-secondary">/mes</span>
+                                    </div>
+                                    <div class="small text-secondary">
+                                        @(plan.VacantesIncluidas.HasValue ? $"{plan.VacantesIncluidas} vacantes activas" : "Vacantes ilimitadas")
+                                        · @plan.DiasVigencia días de vigencia
+                                    </div>
+                                    <ul class="small mt-2 mb-0 ps-3">
+                                        <li class="@(plan.IncluyePruebaPsicometrica ? "" : "text-secondary")">
+                                            <i class="fa-solid @(plan.IncluyePruebaPsicometrica ? "fa-check text-success" : "fa-xmark")"></i>
+                                            Evaluación psicométrica
+                                        </li>
+                                        <li class="@(plan.IncluyeVideoCv ? "" : "text-secondary")">
+                                            <i class="fa-solid @(plan.IncluyeVideoCv ? "fa-check text-success" : "fa-xmark")"></i>
+                                            Video Currículum
+                                        </li>
+                                        <li class="@(plan.PermiteVacantesDestacadas ? "" : "text-secondary")">
+                                            <i class="fa-solid @(plan.PermiteVacantesDestacadas ? "fa-check text-success" : "fa-xmark")"></i>
+                                            Vacantes destacadas
+                                        </li>
+                                    </ul>
+                                </label>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="cj-card">
+                        <h5 class="mb-3">Registrar mi pago</h5>
+                        <p class="small text-secondary">
+                            Realiza tu transferencia o depósito de <strong>$<span id="monto-a-pagar">20</span></strong>
+                            a la cuenta institucional de ChambeaJobs (los datos bancarios te los compartirá soporte
+                            al contactarte), y luego registra aquí la referencia de tu transacción para que un
+                            administrador la valide.
+                        </p>
+
+                        <div class="mb-3">
+                            <label asp-for="ReferenciaTransaccion" class="form-label">Referencia de la transacción</label>
+                            <input asp-for="ReferenciaTransaccion" class="form-control" placeholder="Ej. Comprobante #12345" />
+                            <span asp-validation-for="ReferenciaTransaccion" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn cj-btn-primary w-100">Registrar solicitud de pago</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+

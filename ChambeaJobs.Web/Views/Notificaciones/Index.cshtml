@@ -1,0 +1,68 @@
+@model List<NotificacionDto>
+@{
+    ViewData["Title"] = "Notificaciones";
+    var noLeidas = Model.Count(n => !n.Leida);
+}
+
+<div class="container py-5" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Notificaciones</h2>
+        <div class="d-flex gap-2">
+            @if (noLeidas > 0)
+            {
+                <form asp-controller="Notificaciones" asp-action="MarcarTodasLeidas" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+                        Marcar todas leídas
+                    </button>
+                </form>
+            }
+            @if (Model.Any())
+            {
+                <form asp-controller="Notificaciones" asp-action="EliminarTodas" method="post" onsubmit="return confirm('¿Eliminar todas tus notificaciones? Esta acción no se puede deshacer.');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm cj-btn-outline text-danger" style="border-color:var(--color-error);">
+                        <i class="fa-solid fa-trash"></i> Eliminar todas
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="cj-card text-center py-5">
+            <i class="fa-regular fa-bell fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+            <p class="small text-secondary mb-0">No tienes notificaciones todavía.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-2">
+            @foreach (var n in Model)
+            {
+                <div class="cj-card d-flex align-items-start gap-3 @(n.Leida ? "" : "border-start border-4")"
+                     style="@(n.Leida ? "" : "border-left-color: var(--color-accent-500) !important;")">
+                    <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px; height:36px; border-radius:50%; background:var(--color-primary-100);">
+                        <i class="fa-solid @n.Icono" style="color:var(--color-primary-700); font-size:0.85rem;"></i>
+                    </div>
+                    <a asp-controller="Notificaciones" asp-action="Ir" asp-route-id="@n.Id" class="flex-grow-1 text-decoration-none" style="color: var(--color-text);">
+                        <div class="@(n.Leida ? "" : "fw-semibold")">@n.Mensaje</div>
+                        <div class="small text-secondary">@n.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+                    </a>
+                    @if (!n.Leida)
+                    {
+                        <span class="cj-badge cj-badge-info flex-shrink-0">Nueva</span>
+                    }
+                    <form asp-controller="Notificaciones" asp-action="Eliminar" method="post" class="flex-shrink-0" onsubmit="return confirm('¿Eliminar esta notificación?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@n.Id" />
+                        <button type="submit" class="btn btn-sm text-secondary" title="Eliminar notificación">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,45 @@
+@model List<TicketSoporteDto>
+@{
+    ViewData["Title"] = "Soporte";
+    var abiertos = Model.Count(t => t.Estado == "Abierto");
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Soporte</h2>
+    <p class="small text-secondary mb-4">@abiertos ticket(s) abierto(s) de @Model.Count total.</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="cj-card">
+            <p class="small text-secondary mb-0">No hay tickets de soporte registrados.</p>
+        </div>
+    }
+    else
+    {
+        <div class="cj-card p-0 overflow-hidden">
+            @foreach (var t in Model)
+            {
+                <a asp-controller="Admin" asp-action="ChatSoporte" asp-route-id="@t.Id"
+                   class="d-flex justify-content-between align-items-center gap-3 p-3 border-bottom text-decoration-none flex-wrap"
+                   style="color:inherit;">
+                    <div class="flex-grow-1" style="min-width:220px;">
+                        <div class="fw-semibold">@t.Asunto</div>
+                        <div class="small text-secondary">@t.NombreContacto &lt;@t.CorreoContacto&gt;</div>
+                    </div>
+                    <div class="small text-secondary d-none d-md-block">@t.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+                    <span class="cj-badge @(t.Estado == "Abierto" ? "cj-badge-error" : "cj-badge-success")">@t.Estado</span>
+                    <i class="fa-solid fa-chevron-right small text-secondary"></i>
+                </a>
+            }
+        </div>
+    }
+</div>

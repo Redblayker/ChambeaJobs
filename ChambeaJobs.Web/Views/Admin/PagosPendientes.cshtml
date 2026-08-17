@@ -1,0 +1,89 @@
+@model List<PagoPendienteDto>
+@{
+    ViewData["Title"] = "Pagos pendientes";
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Pagos pendientes de aprobación</h2>
+    <p class="text-secondary mb-4">@Model.Count solicitud@(Model.Count == 1 ? "" : "es") esperando revisión.</p>
+
+    @if (Model.Any())
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="cj-estado-tarjeta alerta">
+                    <div>
+                        <div class="cj-estado-titulo">Solicitudes por revisar</div>
+                        <div class="cj-estado-sub">@Model.Count esperando tu aprobación</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="cj-estado-tarjeta alerta">
+                    <div>
+                        <div class="cj-estado-titulo">Monto total en espera</div>
+                        <div class="cj-estado-sub">$@Model.Sum(p => p.Monto).ToString("0.00")</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-sack-dollar"></i></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fa-solid fa-circle-check fa-2x mb-3" style="color:var(--color-success);"></i>
+                <p class="small text-secondary mb-0">No hay pagos pendientes de revisión en este momento.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+<table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Monto</th>
+                        <th>Referencia</th>
+                        <th>Fecha de solicitud</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pago in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@pago.EmpresaNombre</td>
+                            <td><span class="cj-badge cj-badge-success">$@pago.Monto.ToString("0.00")</span></td>
+                            <td class="small text-secondary">@pago.ReferenciaTransaccion</td>
+                            <td class="text-secondary">@pago.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end">
+                                <form asp-controller="Admin" asp-action="AprobarPago" method="post" class="d-inline" onsubmit="return confirm('¿Aprobar este pago y activar el paquete de la empresa?');">
+                                    <input type="hidden" name="pagoId" value="@pago.PagoId" />
+                                    <button type="submit" class="btn btn-sm cj-btn-primary">Aprobar</button>
+                                </form>
+                                <form asp-controller="Admin" asp-action="RechazarPago" method="post" class="d-inline" onsubmit="return confirm('¿Rechazar este pago?');">
+                                    <input type="hidden" name="pagoId" value="@pago.PagoId" />
+                                    <button type="submit" class="btn btn-sm text-danger">Rechazar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+</div>
+        }
+    </div>
+</div>

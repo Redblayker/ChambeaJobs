@@ -1,0 +1,596 @@
+/* ============================================================
+   ChambeaJobs — Sistema de diseño
+   Paleta de marca (azul marino + naranja) conservada y refinada;
+   neutrales, sombras, radios y componentes elevados a un
+   acabado más pulido (inspirado en Stripe/Linear en cuanto a
+   nivel de detalle, sin copiar su paleta).
+   ============================================================ */
+
+:root {
+  /* ---------- Marca ---------- */
+  --color-primary-900: #0B2A47;
+  --color-primary-700: #14497A;
+  --color-primary-500: #2D6BA3;
+  --color-primary-100: #EAF1F8;
+
+  --color-accent-700: #C6520F;
+  --color-accent-500: #F0661E;
+  --color-accent-300: #FA9A5A;
+  --color-accent-100: #FDEEE3;
+
+  /* ---------- Neutrales ---------- */
+  --color-ink: #12161C;
+  --color-slate: #616B7A;
+  --color-slate-soft: #8892A0;
+  --color-mist: #E5E8EC;
+  --color-mist-soft: #F1F3F5;
+  --color-canvas: #FAFBFC;
+  --color-white: #FFFFFF;
+
+  /* alias históricos (se mantienen para no romper vistas existentes) */
+  --color-gray-900: var(--color-ink);
+  --color-gray-600: var(--color-slate);
+  --color-gray-300: var(--color-mist);
+  --color-gray-100: var(--color-mist-soft);
+
+  --color-success: #16825D;
+  --color-warning: #C77D0A;
+  --color-error: #D33232;
+  --color-info: #2670AC;
+
+  /* ---------- Tipografía ---------- */
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* ---------- Espaciado (escala de 4px) ---------- */
+  --space-1: 4px; --space-2: 8px; --space-3: 16px;
+  --space-4: 24px; --space-5: 32px; --space-6: 48px; --space-7: 64px;
+
+  /* ---------- Radios ---------- */
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px; --radius-full: 999px;
+
+  /* ---------- Sombras (dos capas: ambiente + contacto) ---------- */
+  --shadow-xs: 0 1px 2px rgba(18,22,28,0.06);
+  --shadow-sm: 0 1px 3px rgba(18,22,28,0.06), 0 4px 10px rgba(18,22,28,0.05);
+  --shadow-md: 0 2px 6px rgba(18,22,28,0.06), 0 10px 24px rgba(18,22,28,0.08);
+  --shadow-lg: 0 4px 12px rgba(18,22,28,0.08), 0 20px 40px rgba(11,42,71,0.12);
+  --shadow-accent: 0 8px 20px rgba(240,102,30,0.28);
+
+  /* ---------- Transiciones ---------- */
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --transition-fast: 120ms var(--ease);
+  --transition-base: 200ms var(--ease);
+
+  /* ---------- Tokens semánticos (siempre modo claro) ---------- */
+  --color-bg: var(--color-canvas);
+  --color-surface: var(--color-white);
+  --color-text: var(--color-ink);
+  --color-text-secondary: var(--color-slate);
+  --color-border: var(--color-mist);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .cj-brand {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+h1 { font-weight: 700; }
+h2, h3 { font-weight: 600; }
+
+p { line-height: 1.6; }
+
+a { transition: color var(--transition-fast); }
+
+/* Foco visible consistente (accesibilidad) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 2px;
+}
+
+/* Scrollbar sutil (detalle de acabado) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-mist);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-canvas);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-slate-soft); }
+
+/* ---------- Navbar ---------- */
+.cj-navbar {
+  background-color: var(--color-primary-700);
+  padding: var(--space-3) 0;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, var(--shadow-sm);
+  position: relative;
+  z-index: 20;
+}
+.cj-navbar .nav-link,
+.cj-navbar .navbar-brand {
+  color: rgba(255,255,255,0.88) !important;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+.cj-navbar .nav-link:hover {
+  color: var(--color-white) !important;
+}
+.cj-navbar .navbar-brand {
+  color: var(--color-white) !important;
+}
+.cj-brand {
+  font-weight: 700;
+  font-size: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+}
+.cj-brand-accent {
+  color: var(--color-accent-500);
+  position: relative;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: transform var(--transition-fast), box-shadow var(--transition-base), background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled, .btn.disabled { opacity: 0.55; transform: none; box-shadow: none; }
+
+.cj-btn-primary {
+  background-color: var(--color-accent-500);
+  border: none;
+  color: var(--color-white) !important;
+  border-radius: var(--radius-md);
+  padding: 10px 20px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.cj-btn-primary:hover {
+  background-color: var(--color-accent-700);
+  color: var(--color-white) !important;
+  box-shadow: var(--shadow-accent);
+}
+
+.cj-btn-outline {
+  background-color: transparent;
+  border: 1.5px solid var(--color-primary-700);
+  color: var(--color-primary-700);
+  border-radius: var(--radius-md);
+  padding: 8px 18px;
+  font-weight: 500;
+}
+.cj-btn-outline:hover {
+  background-color: var(--color-primary-100);
+  border-color: var(--color-primary-500);
+}
+
+/* Variante para usarse sobre fondos oscuros (navbar, footer) */
+.cj-btn-outline-light {
+  background-color: transparent;
+  border: 1.5px solid rgba(255,255,255,0.55);
+  color: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 8px 18px;
+  font-weight: 500;
+}
+.cj-btn-outline-light:hover {
+  background-color: rgba(255,255,255,0.12);
+  border-color: var(--color-white);
+}
+
+/* ---------- Cards ---------- */
+.cj-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+  transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+}
+
+/* Tarjetas que actúan como enlaces/acciones reciben una leve elevación al pasar el mouse */
+a.cj-card:hover,
+.cj-card.cj-card-interactive:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-100);
+  transform: translateY(-2px);
+}
+
+/* ---------- Badges de estado ---------- */
+.cj-badge {
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.01em;
+}
+.cj-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.cj-badge-info     { background: var(--color-primary-100); color: var(--color-primary-700); }
+.cj-badge-warning  { background: var(--color-accent-100);  color: var(--color-accent-700); }
+.cj-badge-success  { background: #DEF4E9; color: var(--color-success); }
+.cj-badge-error    { background: #FBE4E4; color: var(--color-error); }
+
+/* ---------- Main / Footer ---------- */
+.cj-main {
+  min-height: 70vh;
+}
+.cj-footer {
+  background-color: var(--color-primary-900);
+  color: rgba(255,255,255,0.75);
+}
+.cj-footer h6 {
+  color: var(--color-white);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.cj-footer a {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+}
+.cj-footer a:hover {
+  color: var(--color-accent-300);
+}
+
+/* ---------- Formularios ---------- */
+.form-label {
+  font-weight: 500;
+  color: var(--color-text);
+  font-size: 0.92rem;
+}
+.form-control, .form-select {
+  border-radius: var(--radius-sm);
+  border-color: var(--color-border);
+  padding: 9px 12px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(20,73,122,0.14);
+}
+.form-control::placeholder { color: var(--color-slate-soft); }
+.form-text { color: var(--color-slate); font-size: 0.85rem; }
+
+/* Checkboxes / radios / switches con el acento de marca */
+.form-check-input:checked {
+  background-color: var(--color-primary-700);
+  border-color: var(--color-primary-700);
+}
+.form-check-input:focus {
+  box-shadow: 0 0 0 3px rgba(20,73,122,0.14);
+}
+
+/* ---------- Alertas ---------- */
+.alert {
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: 0.92rem;
+}
+.alert-success { background: #DEF4E9; color: #0E6B48; border-color: #BFE8D2; }
+.alert-danger  { background: #FBE4E4; color: #A82424; border-color: #F5C6C6; }
+.alert-warning { background: var(--color-accent-100); color: var(--color-accent-700); border-color: #F8D2B4; }
+.alert-info    { background: var(--color-primary-100); color: var(--color-primary-700); border-color: #CFE0F0; }
+
+/* ---------- Tablas ---------- */
+/* Bootstrap define sus propias variables internas para tablas
+   (--bs-table-bg, --bs-table-color), independientes de nuestro
+   sistema de diseño; las sobreescribimos para que respeten los
+   mismos tokens que el resto de la interfaz. */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--color-text);
+  --bs-table-striped-bg: transparent;
+  --bs-table-striped-color: var(--color-text);
+  --bs-table-hover-bg: rgba(20,73,122,0.035);
+  --bs-table-hover-color: var(--color-text);
+  --bs-table-border-color: var(--color-border);
+  color: var(--color-text);
+  font-size: 0.94rem;
+}
+.table > :not(caption) > * > * {
+  background-color: transparent;
+  color: var(--color-text);
+  border-bottom-color: var(--color-border);
+  vertical-align: middle;
+}
+.table thead th {
+  color: var(--color-slate);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom-width: 1.5px;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+.table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+/* ---------- Modales ---------- */
+.modal-content {
+  border-radius: var(--radius-lg);
+  border: none;
+  box-shadow: var(--shadow-lg);
+}
+.modal-header, .modal-footer {
+  border-color: var(--color-border);
+}
+
+/* ---------- Utilidades de espaciado extendidas (Bootstrap solo llega a 5) ---------- */
+.py-6 { padding-top: var(--space-6) !important; padding-bottom: var(--space-6) !important; }
+.py-7 { padding-top: var(--space-7) !important; padding-bottom: var(--space-7) !important; }
+.my-6 { margin-top: var(--space-6) !important; margin-bottom: var(--space-6) !important; }
+
+/* ---------- Responsivo (móvil) ---------- */
+@media (max-width: 767.98px) {
+  .cj-navbar {
+    padding: var(--space-2) 0;
+  }
+  .cj-brand {
+    font-size: 1.05rem;
+  }
+  .cj-card {
+    padding: var(--space-3);
+  }
+  h1.display-5 {
+    font-size: 1.9rem;
+  }
+  .lead {
+    font-size: 1rem;
+  }
+  /* Botones de acción en tablas: que se apilen en vez de desbordar */
+  td.text-end form,
+  td.text-end a,
+  td.text-end button {
+    margin-bottom: var(--space-1);
+  }
+  /* Evitar que las cards de estadísticas se vean apretadas */
+  .cj-card .fs-2 {
+    font-size: 1.5rem !important;
+  }
+
+  /* ---------- Filas de acciones (botones + selects juntos) ----------
+     Patrón muy repetido en Candidatos Postulados, Postulantes de Pasantía,
+     tarjetas de Mis Vacantes/Pasantías, etc. Sin esto, los botones se salen
+     de la pantalla en vez de acomodarse en varias líneas. */
+  .d-flex.gap-2,
+  .d-flex.gap-3 {
+    flex-wrap: wrap;
+  }
+
+  /* Filas "justify-content-between" con varios elementos (nombre + acciones)
+     se ven mejor apiladas en columna en pantallas angostas. */
+  .d-flex.justify-content-between.align-items-center:not(.cj-topbar):not(.cj-estado-tarjeta) {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+
+  /* ---------- Barra superior (topbar) del layout modular ---------- */
+  .cj-topbar {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .cj-topbar .cj-usuario-topbar span:not(.cj-avatar-topbar) {
+    display: none; /* en móvil solo se ve el avatar, no "Hola, Nombre Completo" */
+  }
+
+  /* ---------- Tarjetas de estado (carita) ---------- */
+  .cj-estado-tarjeta {
+    padding: 14px 16px;
+  }
+  .cj-estado-tarjeta .cj-estado-carita {
+    font-size: 1.15rem;
+  }
+
+  /* ---------- Tablas: siempre con scroll horizontal propio, nunca
+     empujando el layout completo de la página ---------- */
+  .table-responsive table {
+    font-size: 0.82rem;
+  }
+  .table-responsive td,
+  .table-responsive th {
+    white-space: nowrap;
+  }
+
+  /* ---------- Formularios en fila (filtros de búsqueda, programar
+     entrevista, etc.): que cada campo ocupe todo el ancho al apilarse ---------- */
+  form .row.g-2 > [class*="col-"],
+  form .row.g-3 > [class*="col-"] {
+    margin-bottom: var(--space-2);
+  }
+
+  /* ---------- Botones que deberían ser de ancho completo en móvil
+     cuando están solos en su propia fila de acciones ---------- */
+  .cj-card .btn.w-100 {
+    font-size: 0.92rem;
+  }
+
+  /* ---------- Video/imagen de Video CV: que no se recorte ---------- */
+  video, .cj-card img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+
+/* ==========================================================================
+   LAYOUT MODULAR (barra lateral) — usado por _LayoutApp.cshtml para las
+   pantallas autenticadas de Candidato, Empresa y Administrador. El layout
+   público (_Layout.cshtml, con el navbar superior de siempre) no se toca.
+   ========================================================================== */
+.cj-app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.cj-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--color-white);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-4) 0;
+}
+.cj-sidebar .cj-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 22px var(--space-4);
+  text-decoration: none;
+}
+.cj-sidebar .cj-sidebar-logo img { height: 30px; }
+.cj-sidebar .cj-sidebar-logo span {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-primary-700);
+}
+.cj-sidebar .cj-sidebar-logo span b { color: var(--color-accent-500); font-weight: 700; }
+
+.cj-sidebar-encabezado-movil { display: flex; align-items: center; justify-content: space-between; }
+
+.cj-sidebar-toggle {
+  display: none;
+  background: none; border: none; color: var(--color-text);
+  font-size: 1.15rem; padding: 0 22px var(--space-4) 0;
+}
+
+.cj-sidebar-titulo {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-slate-soft);
+  text-transform: uppercase;
+  padding: var(--space-3) 22px 6px;
+}
+
+.cj-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 22px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+.cj-sidebar-item i { width: 18px; text-align: center; color: var(--color-slate-soft); font-size: 0.85rem; }
+.cj-sidebar-item:hover { background: var(--color-mist-soft); color: var(--color-text); text-decoration: none; }
+.cj-sidebar-item.activo {
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+  border-right: 3px solid var(--color-accent-500);
+  font-weight: 600;
+}
+.cj-sidebar-item.activo i { color: var(--color-accent-500); }
+
+.cj-topbar {
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  padding: 14px 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.cj-topbar .cj-usuario-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.cj-topbar .cj-avatar-topbar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--color-primary-700); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+}
+
+.cj-content-area { flex: 1; min-width: 0; }
+
+/* Tarjetas de estado tipo "carita" (usadas en los paneles principales) */
+.cj-estado-tarjeta {
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cj-estado-tarjeta.bien { background: #E3F7EC; }
+.cj-estado-tarjeta.alerta { background: #FFF6E0; }
+.cj-estado-tarjeta .cj-estado-titulo { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--color-ink); }
+.cj-estado-tarjeta .cj-estado-sub { font-size: 0.78rem; color: var(--color-slate); margin-top: 2px; }
+.cj-estado-tarjeta .cj-estado-carita { font-size: 1.4rem; }
+.cj-estado-tarjeta.bien .cj-estado-carita { color: var(--color-success); }
+.cj-estado-tarjeta.alerta .cj-estado-carita { color: var(--color-warning); }
+
+@media (max-width: 991.98px) {
+  .cj-app-shell { flex-direction: column; }
+  .cj-sidebar {
+    width: 100%; border-right: none; border-bottom: 1px solid var(--color-border);
+    padding: var(--space-2) 0 0;
+  }
+  .cj-sidebar .cj-sidebar-encabezado-movil .cj-sidebar-logo { padding: 0 16px var(--space-2); }
+  .cj-sidebar-titulo { display: none; }
+  .cj-sidebar-item { padding: 10px 16px; }
+  .cj-sidebar-item.activo { border-right: none; border-left: 3px solid var(--color-accent-500); }
+
+  /* En pantallas de celular, el menú se convierte en un panel deslizante
+     (Offcanvas de Bootstrap) que se abre desde el lado izquierdo, con un
+     fondo oscuro detrás y se cierra tocando ese fondo, el botón de cerrar,
+     o el mismo botón de hamburguesa — en vez de "empujar" el contenido de
+     la página hacia abajo, como pasaba antes con el Collapse. Bootstrap ya
+     resuelve el deslizamiento y el fondo (backdrop) por su cuenta; aquí
+     solo se ajustan el ancho y los colores para que combinen con la marca.
+     A partir del punto de quiebre "lg" (992px), .offcanvas-lg vuelve a
+     comportarse como un panel fijo normal, sin animación ni backdrop. */
+  .cj-sidebar-toggle { display: inline-flex; align-items: center; }
+  .cj-sidebar-items {
+    width: 280px;
+    max-width: 82vw;
+  }
+  .cj-sidebar-items .offcanvas-header {
+    padding: var(--space-2) 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+
+

@@ -1,0 +1,52 @@
+@model CrearTicketSoporteDto
+@{
+    ViewData["Title"] = "Soporte";
+}
+
+<div class="container py-5" style="max-width: 640px;">
+    <div class="d-flex align-items-center gap-3 mb-2">
+        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:44px; height:44px; border-radius:var(--radius-md); background:var(--color-primary-100);">
+            <i class="fa-solid fa-headset" style="color:var(--color-primary-700);"></i>
+        </div>
+        <h2 class="mb-0">Centro de soporte</h2>
+    </div>
+    <p class="text-secondary mb-4">¿Tienes un problema o una pregunta? Escríbenos y te responderemos lo antes posible.</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+
+    <div class="cj-card">
+        <form asp-controller="Soporte" asp-action="Contacto" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input asp-for="NombreContacto" class="form-control" />
+                <span asp-validation-for="NombreContacto" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Correo</label>
+                <input asp-for="CorreoContacto" class="form-control" />
+                <span asp-validation-for="CorreoContacto" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Asunto</label>
+                <input asp-for="Asunto" class="form-control" />
+                <span asp-validation-for="Asunto" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Mensaje</label>
+                <textarea asp-for="Mensaje" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="Mensaje" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn cj-btn-primary w-100">Enviar mensaje</button>
+        </form>
+    </div>
+</div>

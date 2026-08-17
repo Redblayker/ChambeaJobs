@@ -1,0 +1,176 @@
+@model List<VacanteListItemDto>
+@{
+    ViewData["Title"] = "Dashboard";
+    var estadoPaquete = ViewBag.EstadoPaquete as PaqueteEstadoDto;
+    var vacantesActivas = (int)ViewBag.VacantesActivas;
+    var totalVacantes = (int)ViewBag.TotalVacantes;
+    var resumen = ViewBag.Resumen as EmpresaDashboardResumenDto;
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <h2 class="mb-0">Panel de la empresa</h2>
+        <a asp-controller="Empresa" asp-action="PublicarVacante" class="btn cj-btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Publicar vacante
+        </a>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @* ---------- Franja única de métricas ----------
+       Antes había 3 tarjetas grandes de "estado" + 5 tarjetas KPI repitiendo
+       la misma información (Vacantes activas y Pruebas pendientes salían
+       dos veces). Se combina todo en una sola franja compacta de chips, para
+       que "Últimas vacantes" gane el protagonismo que le corresponde. *@
+    <div class="cj-card mb-4 py-3">
+        <div class="d-flex flex-wrap gap-4 justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid @(estadoPaquete != null && estadoPaquete.PuedePublicar ? "fa-circle-check" : "fa-triangle-exclamation")"
+                   style="color:@(estadoPaquete != null && estadoPaquete.PuedePublicar ? "var(--color-success)" : "var(--color-warning)");"></i>
+                <div>
+                    <div class="small text-secondary lh-1">Suscripción</div>
+                    <div class="fw-semibold">@(estadoPaquete?.NombrePlan ?? "Sin plan")</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-briefcase" style="color:var(--color-accent-500);"></i>
+                <div>
+                    <div class="small text-secondary lh-1">Vacantes activas</div>
+                    <div class="fw-semibold">@(resumen?.VacantesActivas ?? vacantesActivas)</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-user-plus" style="color:var(--color-primary-700);"></i>
+                <div>
+                    <div class="small text-secondary lh-1">Candidatos nuevos</div>
+                    <div class="fw-semibold">@(resumen?.CandidatosNuevos ?? 0)</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-calendar-day" style="color:var(--color-info);"></i>
+                <div>
+                    <div class="small text-secondary lh-1">Entrevistas hoy</div>
+                    <div class="fw-semibold">@(resumen?.EntrevistasHoy ?? 0)</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-clipboard-question" style="color:var(--color-warning);"></i>
+                <div>
+                    <div class="small text-secondary lh-1">Pruebas pendientes</div>
+                    <div class="fw-semibold">@(resumen?.PruebasPendientes ?? 0)</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-check-circle" style="color:var(--color-success);"></i>
+                <div>
+                    <div class="small text-secondary lh-1">Contrataciones del mes</div>
+                    <div class="fw-semibold">@(resumen?.ContratacionesDelMes ?? 0)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- Estado del paquete ---------- solo se muestra si necesita acción *@
+    @if (estadoPaquete is null || !estadoPaquete.TienePaquete)
+    {
+        <div class="cj-card mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h5 class="mb-1"><i class="fa-solid fa-triangle-exclamation me-2" style="color: var(--color-warning);"></i>No tienes un paquete de publicación vigente</h5>
+                    <p class="small text-secondary mb-0">Compra un paquete ($20 = 10 vacantes, 30 días) para poder publicar.</p>
+                </div>
+                <a asp-controller="Empresa" asp-action="ComprarPaquete" class="btn cj-btn-primary">Comprar paquete</a>
+            </div>
+        </div>
+    }
+    else if (estadoPaquete.Estado == "Pendiente")
+    {
+        <div class="cj-card mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h5 class="mb-1"><i class="fa-solid fa-clock me-2" style="color: var(--color-warning);"></i>Tu solicitud de pago está en revisión</h5>
+                    <p class="small text-secondary mb-0">Un administrador validará tu pago pronto. Podrás publicar en cuanto se apruebe.</p>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!estadoPaquete.PuedePublicar || (estadoPaquete.DiasRestantes.HasValue && estadoPaquete.DiasRestantes <= 5))
+    {
+        @* Solo se muestra la barra de progreso del paquete cuando hace falta
+           tomar acción (vencido o por vencer) — si todo está bien, ya lo dice
+           el chip "Suscripción" de arriba y no hace falta repetirlo con una
+           tarjeta grande adicional. *@
+        <div class="cj-card mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-2">
+                <h5 class="mb-0">Tu paquete de publicación</h5>
+                <span class="cj-badge @(estadoPaquete.PuedePublicar ? "cj-badge-success" : "cj-badge-error")">@estadoPaquete.Estado</span>
+            </div>
+            <div class="progress mb-2" style="height:8px;">
+                @if (estadoPaquete.VacantesIncluidas.HasValue && estadoPaquete.VacantesIncluidas > 0)
+                {
+                    <div class="progress-bar" role="progressbar"
+                         style="width:@(estadoPaquete.VacantesConsumidas * 100 / estadoPaquete.VacantesIncluidas)%; background-color: var(--color-accent-500);"></div>
+                }
+                else
+                {
+                    <div class="progress-bar" role="progressbar" style="width:100%; background-color: var(--color-primary-700);"></div>
+                }
+            </div>
+            <div class="d-flex justify-content-between small text-secondary">
+                <span>@estadoPaquete.VacantesConsumidas de @(estadoPaquete.VacantesIncluidas?.ToString() ?? "ilimitadas") vacantes usadas</span>
+                <span>@estadoPaquete.DiasRestantes días restantes</span>
+            </div>
+            @if (!estadoPaquete.PuedePublicar)
+            {
+                <a asp-controller="Empresa" asp-action="ComprarPaquete" class="btn cj-btn-primary btn-sm mt-3">Renovar paquete</a>
+            }
+        </div>
+    }
+
+    @* ---------- Últimas vacantes: ahora es lo más grande de la página ---------- *@
+    <div class="cj-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="mb-0">Últimas vacantes</h4>
+                <span class="small text-secondary">@totalVacantes publicadas en total</span>
+            </div>
+            <a asp-controller="Empresa" asp-action="MisVacantes" class="btn btn-sm cj-btn-outline">Ver todas</a>
+        </div>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa-solid fa-briefcase fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+                <p class="small text-secondary mb-3">Aún no has publicado vacantes.</p>
+                <a asp-controller="Empresa" asp-action="PublicarVacante" class="btn cj-btn-primary btn-sm">Publicar tu primera vacante</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr><th>Título</th><th>Categoría</th><th>Publicada</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@v.Titulo</td>
+                                <td>@v.CategoriaNombre</td>
+                                <td>@v.FechaPublicacion.ToString("dd/MM/yyyy")</td>
+                                <td><span class="cj-badge @(v.Estado == "Activa" ? "cj-badge-success" : "cj-badge-info")">@v.Estado</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

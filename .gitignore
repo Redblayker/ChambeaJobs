@@ -1,0 +1,12 @@
+## .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+
+## Publicación
+publish/
+
+## Secretos locales
+appsettings.Local.json

@@ -1,0 +1,100 @@
+@model PasantiaDetalleDto
+@{
+    ViewData["Title"] = Model.Titulo;
+    var esCandidato = (bool)(ViewBag.EsCandidato ?? false);
+    var yaPostulo = (bool)(ViewBag.YaPostulo ?? false);
+}
+
+<div class="container py-5">
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="cj-card mb-4" style="border-left: 3px solid #7C3AED;">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div class="d-flex gap-3">
+                        @if (!string.IsNullOrEmpty(Model.EmpresaLogoUrl))
+                        {
+                            <img src="@Model.EmpresaLogoUrl" style="width:56px; height:56px; border-radius:var(--radius-md); object-fit:cover; flex-shrink:0;" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                                 style="width:56px; height:56px; border-radius:var(--radius-md); background:#F3EBFB;">
+                                <i class="fa-solid fa-building" style="color:#7C3AED; font-size:1.2rem;"></i>
+                            </div>
+                        }
+                        <div>
+                            <span class="cj-badge mb-2" style="background:#F3EBFB; color:#6D28D9;"><i class="fa-solid fa-graduation-cap"></i> Pasantía</span>
+                            <h2 class="mb-1">@Model.Titulo</h2>
+                            <p class="text-secondary mb-2">@Model.EmpresaNombre</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="cj-badge cj-badge-info">@Model.UbicacionNombre</span>
+                                <span class="cj-badge cj-badge-info">@Model.Modalidad</span>
+                                <span class="cj-badge cj-badge-info">@Model.CategoriaNombre</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fs-5 fw-bold" style="color:#6D28D9;">
+                            @(Model.EsRemunerada ? (Model.MontoRemuneracion.HasValue ? $"C${Model.MontoRemuneracion:0}/mes" : "Remunerada") : "No remunerada")
+                        </div>
+                        <div class="small text-secondary">@Model.DuracionMeses mes@(Model.DuracionMeses == 1 ? "" : "es") de duración</div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <h5>Descripción</h5>
+                <p style="white-space:pre-line;">@Model.Descripcion</p>
+
+                @if (!string.IsNullOrEmpty(Model.Requisitos))
+                {
+                    <h5>Requisitos</h5>
+                    <p style="white-space:pre-line;">@Model.Requisitos</p>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="cj-card" style="position:sticky; top:var(--space-4);">
+                @if (Model.Estado != "Activa")
+                {
+                    <div class="alert alert-secondary small">Esta pasantía ya no acepta postulaciones.</div>
+                }
+                else if (!esCandidato)
+                {
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Detalle", "Pasantia", new { id = Model.Id })" class="btn w-100 mb-2" style="background:#7C3AED; color:white;">
+                        Inicia sesión para aplicar
+                    </a>
+                }
+                else if (yaPostulo)
+                {
+                    <button class="btn cj-btn-outline w-100 mb-2" style="color:#7C3AED; border-color:#7C3AED;" disabled>
+                        <i class="fa-solid fa-check me-1"></i> Ya postulado
+                    </button>
+                }
+                else
+                {
+                    <form asp-controller="Pasantia" asp-action="Aplicar" method="post" class="mb-2">
+                        <input type="hidden" name="pasantiaId" value="@Model.Id" />
+                        <button type="submit" class="btn w-100" style="background:#7C3AED; color:white;">Aplicar a esta pasantía</button>
+                    </form>
+                }
+
+                <hr />
+                <div class="small text-secondary d-flex flex-column gap-2">
+                    <div><i class="fa-regular fa-calendar me-2" style="width:14px;"></i>Publicada: @Model.FechaPublicacion.ToString("dd/MM/yyyy")</div>
+                    <div><i class="fa-regular fa-clock me-2" style="width:14px;"></i>Cierra: @Model.FechaCierre.ToString("dd/MM/yyyy")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

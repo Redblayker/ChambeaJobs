@@ -1,0 +1,204 @@
+@model ReporteDashboardDto
+@{
+    ViewData["Title"] = "Dashboard Administrador";
+    var pagosPendientesCount = (int)(ViewBag.PagosPendientesCount ?? 0);
+}
+
+<div class="container py-3">
+    <h2 class="mb-1" style="font-size:1.4rem;">Dashboard Administrador</h2>
+    <p class="text-secondary small mb-3">Resumen general de la plataforma.</p>
+
+    <!-- ---------- Tarjetas de estado ---------- -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="cj-estado-tarjeta bien">
+                <div>
+                    <div class="cj-estado-titulo">Plataforma</div>
+                    <div class="cj-estado-sub">Operando con normalidad</div>
+                </div>
+                <div class="cj-estado-carita"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-estado-tarjeta @(pagosPendientesCount == 0 ? "bien" : "alerta")">
+                <div>
+                    <div class="cj-estado-titulo">Pagos pendientes</div>
+                    <div class="cj-estado-sub">@pagosPendientesCount solicitudes por revisar</div>
+                </div>
+                <div class="cj-estado-carita">@Html.Raw(pagosPendientesCount == 0 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-estado-tarjeta bien">
+                <div>
+                    <div class="cj-estado-titulo">Tickets de soporte</div>
+                    <div class="cj-estado-sub">Revisa el módulo de Soporte</div>
+                </div>
+                <div class="cj-estado-carita"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px; height:32px; border-radius:var(--radius-sm); background:var(--color-primary-100);">
+                    <i class="fa-solid fa-users" style="color:var(--color-primary-700); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem; color:var(--color-ink);">@Model.TotalCandidatos</span>
+                    <span class="small text-secondary">Candidatos</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px; height:32px; border-radius:var(--radius-sm); background:var(--color-primary-100);">
+                    <i class="fa-solid fa-building" style="color:var(--color-primary-700); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem; color:var(--color-ink);">@Model.TotalEmpresas</span>
+                    <span class="small text-secondary">Empresas</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px; height:32px; border-radius:var(--radius-sm); background:var(--color-accent-100);">
+                    <i class="fa-solid fa-briefcase" style="color:var(--color-accent-500); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem; color:var(--color-ink);">@Model.VacantesActivas</span>
+                    <span class="small text-secondary">Vacantes activas</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px; height:32px; border-radius:var(--radius-sm); background:#DEF4E9;">
+                    <i class="fa-solid fa-sack-dollar" style="color:var(--color-success); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem; color:var(--color-ink);">$@Model.IngresosTotales.ToString("0.00")</span>
+                    <span class="small text-secondary">Ingresos aprobados</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-md-4">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px; height:28px; border-radius:50%; background:#DEF4E9;">
+                    <i class="fa-solid fa-calendar-week" style="color:var(--color-success); font-size:0.75rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1rem; color:var(--color-ink);">$@Model.IngresosSemana.ToString("0.00")</span>
+                    <span class="small text-secondary">Últimos 7 días</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px; height:28px; border-radius:50%; background:#DEF4E9;">
+                    <i class="fa-solid fa-calendar-days" style="color:var(--color-success); font-size:0.75rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1rem; color:var(--color-ink);">$@Model.IngresosQuincena.ToString("0.00")</span>
+                    <span class="small text-secondary">Últimos 15 días</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px; height:28px; border-radius:50%; background:#DEF4E9;">
+                    <i class="fa-solid fa-calendar-check" style="color:var(--color-success); font-size:0.75rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1rem; color:var(--color-ink);">$@Model.IngresosMes.ToString("0.00")</span>
+                    <span class="small text-secondary">Mes en curso</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="cj-card">
+                <h6 class="mb-2 small fw-bold">Postulaciones por mes</h6>
+                <div style="position:relative; height:180px;">
+                    <canvas id="chartPostulaciones"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="cj-card">
+                <h6 class="mb-2 small fw-bold">Vacantes por categoría</h6>
+                <div style="position:relative; height:180px;">
+                    <canvas id="chartCategorias"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="mt-5 mb-3">Gestión</h5>
+    <div class="row g-3">
+        @{
+            var accesos = new (string Accion, string Icono, string Titulo)[] {
+                ("GestionUsuarios", "fa-users", "Usuarios"),
+                ("GestionEmpresas", "fa-building", "Empresas"),
+                ("GestionVacantes", "fa-briefcase", "Vacantes"),
+                ("HistorialPagos", "fa-receipt", "Historial de pagos"),
+                ("Categorias", "fa-tags", "Categorías"),
+                ("Ubicaciones", "fa-location-dot", "Ubicaciones"),
+                ("Configuracion", "fa-gear", "Configuración"),
+                ("Auditoria", "fa-clipboard-list", "Auditoría"),
+                ("Soporte", "fa-headset", "Soporte")
+            };
+        }
+        @foreach (var (accion, icono, titulo) in accesos)
+        {
+            <div class="col-6 col-md-3">
+                <a asp-controller="Admin" asp-action="@accion" class="cj-card cj-card-interactive d-flex align-items-center gap-3 text-decoration-none h-100">
+                    <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px; height:36px; border-radius:var(--radius-sm); background:var(--color-primary-100);">
+                        <i class="fa-solid @icono" style="color:var(--color-primary-700);"></i>
+                    </div>
+                    <span class="fw-semibold" style="color:var(--color-text);">@titulo</span>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const etiquetasPostulaciones = @Html.Raw(Json.Serialize(Model.PostulacionesPorMes.Select(p => p.Etiqueta)));
+        const valoresPostulaciones = @Html.Raw(Json.Serialize(Model.PostulacionesPorMes.Select(p => p.Valor)));
+
+        new Chart(document.getElementById('chartPostulaciones'), {
+            type: 'line',
+            data: {
+                labels: etiquetasPostulaciones,
+                datasets: [{ label: 'Postulaciones', data: valoresPostulaciones, borderColor: '#F0661E', backgroundColor: 'rgba(240,102,30,0.15)', tension: 0.3, fill: true }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const etiquetasCategorias = @Html.Raw(Json.Serialize(Model.VacantesPorCategoria.Select(c => c.Etiqueta)));
+        const valoresCategorias = @Html.Raw(Json.Serialize(Model.VacantesPorCategoria.Select(c => c.Valor)));
+
+        new Chart(document.getElementById('chartCategorias'), {
+            type: 'bar',
+            data: {
+                labels: etiquetasCategorias,
+                datasets: [{ label: 'Vacantes', data: valoresCategorias, backgroundColor: '#14497A' }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    </script>
+}

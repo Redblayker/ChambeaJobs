@@ -1,0 +1,121 @@
+@model List<VacanteListItemDto>
+@{
+    ViewData["Title"] = "Mis vacantes";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Mis vacantes</h2>
+        <a asp-controller="Empresa" asp-action="PublicarVacante" class="btn cj-btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Publicar vacante
+        </a>
+    </div>
+
+    @if (Model.Any())
+    {
+        var activas = Model.Count(v => v.Estado == "Activa");
+        var cerradas = Model.Count(v => v.Estado != "Activa");
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Vacantes activas</div>
+                        <div class="cj-estado-sub">@activas publicándose ahora</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-circle-check"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Total histórico</div>
+                        <div class="cj-estado-sub">@Model.Count vacantes publicadas</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-briefcase"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Cerradas</div>
+                        <div class="cj-estado-sub">@cerradas ya no reciben postulaciones</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-box-archive"></i></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fa-solid fa-briefcase fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+                <p class="small text-secondary mb-0">Aún no has publicado vacantes. <a asp-controller="Empresa" asp-action="PublicarVacante">Publica la primera</a>.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+<table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Categoría</th>
+                        <th>Publicada</th>
+                        <th>Postulantes</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @if (v.EsDestacada)
+                                {
+                                    <i class="fa-solid fa-star" style="color:#F0B429;" title="Destacada"></i>
+                                }
+                                @v.Titulo
+                            </td>
+                            <td>@v.CategoriaNombre</td>
+                            <td>@v.FechaPublicacion.ToString("dd/MM/yyyy")</td>
+                            <td><span class="cj-badge cj-badge-info">@v.NumeroPostulantes</span></td>
+                            <td><span class="cj-badge @(v.Estado == "Activa" ? "cj-badge-success" : "cj-badge-info")">@v.Estado</span></td>
+                            <td class="text-end">
+                                <a asp-controller="Empresa" asp-action="CandidatosPostulados" asp-route-vacanteId="@v.Id" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);" title="Ver candidatos">
+                                    <i class="fa-solid fa-users"></i> Candidatos
+                                </a>
+                                <a asp-controller="Empresa" asp-action="EditarVacante" asp-route-id="@v.Id" class="btn btn-sm" title="Editar">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                @if (v.Estado == "Activa")
+                                {
+                                    <form asp-controller="Empresa" asp-action="CerrarVacante" method="post" class="d-inline" onsubmit="return confirm('¿Cerrar esta vacante? Ya no aparecerá en las búsquedas.');">
+                                        <input type="hidden" name="id" value="@v.Id" />
+                                        <button type="submit" class="btn btn-sm" title="Cerrar"><i class="fa-solid fa-lock"></i></button>
+                                    </form>
+                                }
+                                <form asp-controller="Empresa" asp-action="EliminarVacante" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta vacante permanentemente?');">
+                                    <input type="hidden" name="id" value="@v.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+</div>
+        }
+    </div>
+</div>

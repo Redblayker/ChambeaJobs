@@ -1,0 +1,6 @@
+@{
+    // Buscar/Detalle Vacante los ve tanto un visitante sin cuenta como un
+    // Candidato o Empresa ya logueado. Por eso el layout se elige según si
+    // hay sesión activa o no, en vez de ser fijo como en los demás módulos.
+    Layout = User.Identity?.IsAuthenticated == true ? "_LayoutApp" : "_Layout";
+}

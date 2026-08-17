@@ -1,0 +1,59 @@
+@model List<PasantiaAdminDto>
+@{
+    ViewData["Title"] = "Gestión de Pasantías";
+}
+
+<div class="container py-5">
+    <div class="d-flex align-items-center gap-3 mb-1">
+        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px; border-radius:var(--radius-md); background:#F3EBFB;">
+            <i class="fa-solid fa-graduation-cap" style="color:#7C3AED;"></i>
+        </div>
+        <h2 class="mb-0">Gestión de Pasantías</h2>
+    </div>
+    <p class="text-secondary mb-4">@Model.Count pasantía@(Model.Count == 1 ? "" : "s") en total (módulo independiente de Vacantes de empleo).</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        <div class="table-responsive">
+<table class="table align-middle">
+            <thead>
+                <tr><th>Título</th><th>Empresa</th><th>Categoría</th><th>Postulantes</th><th>Publicada</th><th>Estado</th><th class="text-end">Acciones</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@p.Titulo</td>
+                        <td class="text-secondary">@p.EmpresaNombre</td>
+                        <td><span class="cj-badge cj-badge-info">@p.CategoriaNombre</span></td>
+                        <td><span class="cj-badge cj-badge-info">@p.NumeroPostulantes</span></td>
+                        <td class="text-secondary">@p.FechaPublicacion.ToString("dd/MM/yyyy")</td>
+                        <td><span class="cj-badge @(p.Estado == "Activa" ? "cj-badge-success" : "cj-badge-info")">@p.Estado</span></td>
+                        <td class="text-end">
+                            @if (p.Estado == "Activa")
+                            {
+                                <form asp-controller="Admin" asp-action="DespublicarPasantia" method="post" class="d-inline" onsubmit="return confirm('¿Despublicar esta pasantía?');">
+                                    <input type="hidden" name="id" value="@p.Id" />
+                                    <button type="submit" class="btn btn-sm">Despublicar</button>
+                                </form>
+                            }
+                            <form asp-controller="Admin" asp-action="EliminarPasantiaAdmin" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta pasantía permanentemente?');">
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <button type="submit" class="btn btn-sm text-danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+    </div>
+</div>

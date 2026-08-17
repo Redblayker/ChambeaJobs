@@ -1,0 +1,86 @@
+@model List<EditarPlanSuscripcionDto>
+@{
+    ViewData["Title"] = "Configuración de planes";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-1">Configuración de planes</h2>
+            <p class="text-secondary mb-4">
+                Estos valores controlan el modelo de negocio: precio, cantidad de vacantes (vacío = ilimitado)
+                y días de vigencia de cada plan. Los cambios afectan a las empresas <strong>a partir de su próximo ciclo</strong>
+                (no modifican paquetes ya activos).
+            </p>
+
+            @if (TempData["Exito"] != null)
+            {
+                <div class="alert alert-success">@TempData["Exito"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <div class="row g-3">
+                @foreach (var plan in Model)
+                {
+                    <div class="col-md-6">
+                        <div class="cj-card">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width:40px; height:40px; border-radius:var(--radius-sm); background:var(--color-accent-100);">
+                                    <i class="fa-solid @(plan.VacantesIncluidas.HasValue ? "fa-box-open" : "fa-infinity")" style="color:var(--color-accent-500);"></i>
+                                </div>
+                                <h5 class="mb-0">@plan.Nombre</h5>
+                            </div>
+
+                            <form asp-controller="Admin" asp-action="EditarPlan" method="post">
+                                <input type="hidden" name="Id" value="@plan.Id" />
+                                <input type="hidden" name="Nombre" value="@plan.Nombre" />
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Precio mensual (USD)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" name="Precio" step="0.01" min="0.01" value="@plan.Precio.ToString("0.00")" class="form-control" required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Vacantes incluidas (vacío = ilimitado)</label>
+                                    <input type="number" name="VacantesIncluidas" min="1" value="@plan.VacantesIncluidas" class="form-control" placeholder="Ilimitado" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small">Días de vigencia</label>
+                                    <input type="number" name="DiasVigencia" min="1" value="@plan.DiasVigencia" class="form-control" required />
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="IncluyePruebaPsicometrica" value="true" class="form-check-input" id="prueba-@plan.Id" checked="@plan.IncluyePruebaPsicometrica" />
+                                    <label class="form-check-label small" for="prueba-@plan.Id">Incluye evaluación psicométrica</label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" name="IncluyeVideoCv" value="true" class="form-check-input" id="video-@plan.Id" checked="@plan.IncluyeVideoCv" />
+                                    <label class="form-check-label small" for="video-@plan.Id">Incluye Video Currículum</label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" name="PermiteVacantesDestacadas" value="true" class="form-check-input" id="destacadas-@plan.Id" checked="@plan.PermiteVacantesDestacadas" />
+                                    <label class="form-check-label small" for="destacadas-@plan.Id"><i class="fa-solid fa-star" style="color:#F0B429;"></i> Permite vacantes destacadas</label>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" name="Activo" value="true" class="form-check-input" id="activo-@plan.Id" checked="@plan.Activo" />
+                                    <label class="form-check-label small" for="activo-@plan.Id">Disponible para nuevas suscripciones</label>
+                                </div>
+
+                                <button type="submit" class="btn cj-btn-primary w-100">Guardar cambios</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

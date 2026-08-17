@@ -1,0 +1,64 @@
+@model List<CategoriaFormDto>
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Categorías</h2>
+    <p class="text-secondary mb-4">@Model.Count categoría@(Model.Count == 1 ? "" : "s") disponible@(Model.Count == 1 ? "" : "s") para clasificar vacantes.</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card mb-4">
+        <h5 class="mb-3"><i class="fa-solid fa-plus me-2" style="color:var(--color-accent-500);"></i>Nueva categoría</h5>
+        <form asp-controller="Admin" asp-action="CrearCategoria" method="post" class="row g-2">
+            <div class="col-md-4">
+                <input name="nombre" class="form-control" placeholder="Nombre" required />
+            </div>
+            <div class="col-md-6">
+                <input name="descripcion" class="form-control" placeholder="Descripción (opcional)" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn cj-btn-primary w-100">Agregar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="cj-card">
+        <div class="table-responsive">
+<table class="table align-middle">
+            <thead><tr><th>Nombre</th><th>Descripción</th><th>Vacantes</th><th class="text-end">Acciones</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <form id="form-editar-cat-@c.Id" asp-controller="Admin" asp-action="EditarCategoria" method="post">
+                        <input type="hidden" name="id" value="@c.Id" />
+                    </form>
+                    <tr>
+                        <td><input form="form-editar-cat-@c.Id" name="nombre" class="form-control form-control-sm" value="@c.Nombre" /></td>
+                        <td><input form="form-editar-cat-@c.Id" name="descripcion" class="form-control form-control-sm" value="@c.Descripcion" /></td>
+                        <td><span class="cj-badge cj-badge-info">@c.VacantesAsociadas</span></td>
+                        <td class="text-end">
+                            <button form="form-editar-cat-@c.Id" type="submit" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">Guardar</button>
+                            @if (c.VacantesAsociadas == 0)
+                            {
+                                <form asp-controller="Admin" asp-action="EliminarCategoria" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta categoría?');">
+                                    <input type="hidden" name="id" value="@c.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger">Eliminar</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+    </div>
+</div>

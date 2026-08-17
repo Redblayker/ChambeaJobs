@@ -1,0 +1,281 @@
+@model EditarPerfilExtendidoEmpresaDto
+@{
+    ViewData["Title"] = "Perfil público de la empresa";
+    var galeria = ViewBag.Galeria as List<EmpresaGaleriaDto> ?? new List<EmpresaGaleriaDto>();
+    var empresaId = (int)ViewBag.EmpresaId;
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h2 class="mb-1">Perfil público de la empresa</h2>
+            <p class="text-secondary mb-0 small">Esta información la ven los candidatos cuando exploran tus vacantes.</p>
+        </div>
+        <a asp-controller="Vacante" asp-action="PerfilEmpresa" asp-route-id="@empresaId" target="_blank" class="btn cj-btn-outline btn-sm" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+            <i class="fa-solid fa-eye me-1"></i>Ver cómo lo ven los candidatos
+        </a>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <!-- ---------- Logo de la empresa ---------- -->
+    <div class="cj-card mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="fa-solid fa-image" style="color:var(--color-accent-500);"></i>
+            <h6 class="mb-0">Logo de la empresa</h6>
+        </div>
+        <form asp-controller="Empresa" asp-action="SubirLogo" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-3 flex-wrap">
+            @{
+                var logoUrlActual = ViewBag.LogoUrlActual as string;
+            }
+            <!-- Zona clicable con vista previa en vivo — antes esto era un ícono
+                 genérico sin ninguna forma de subir el logo real desde esta
+                 página (la única a la que el menú "Mi Empresa" realmente lleva). -->
+            <label for="inputLogoExtendido" class="d-block" style="cursor:pointer;">
+                <div id="zonaLogoPreviewExtendido" class="d-flex flex-column align-items-center justify-content-center text-center"
+                     style="width:110px; height:110px; border-radius:var(--radius-md); border:2px dashed var(--color-border); background:var(--color-canvas); overflow:hidden;">
+                    @if (!string.IsNullOrEmpty(logoUrlActual))
+                    {
+                        <img id="imgLogoPreviewExtendido" src="@logoUrlActual" style="width:100%; height:100%; object-fit:cover;" alt="Logo actual" />
+                    }
+                    else
+                    {
+                        <img id="imgLogoPreviewExtendido" src="" style="width:100%; height:100%; object-fit:cover; display:none;" alt="Logo nuevo" />
+                        <div id="placeholderLogoExtendido">
+                            <i class="fa-solid fa-camera mb-1" style="color:var(--color-slate-soft);"></i>
+                            <div class="small text-secondary">Subir foto</div>
+                        </div>
+                    }
+                </div>
+            </label>
+            <div>
+                <p class="small text-secondary mb-2">
+                    Sube el logo real de tu empresa (ej. si eres "Tigo", sube el logo de Tigo) — se muestra
+                    en tu perfil público y en todas tus vacantes publicadas. JPG o PNG, máx. 2MB.
+                </p>
+                <input type="file" name="logo" id="inputLogoExtendido" class="visually-hidden" accept=".jpg,.jpeg,.png" />
+                <button type="submit" class="btn cj-btn-primary btn-sm">Guardar logo</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="cj-card mb-4">
+        <form asp-controller="Empresa" asp-action="PerfilExtendido" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="fa-solid fa-book-open" style="color:var(--color-accent-500);"></i>
+                <h6 class="mb-0">Historia y cultura</h6>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Historia" class="form-label">Historia de la empresa</label>
+                <textarea asp-for="Historia" class="form-control" rows="4" placeholder="¿Cómo nació tu empresa? ¿Cuál es su trayectoria?"></textarea>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Mision" class="form-label">Misión</label>
+                    <textarea asp-for="Mision" class="form-control" rows="3" placeholder="¿Cuál es el propósito de tu empresa?"></textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Vision" class="form-label">Visión</label>
+                    <textarea asp-for="Vision" class="form-control" rows="3" placeholder="¿A dónde quiere llegar tu empresa?"></textarea>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CulturaOrganizacional" class="form-label">Cultura organizacional</label>
+                <textarea asp-for="CulturaOrganizacional" class="form-control" rows="4" placeholder="¿Cómo es trabajar en tu empresa? ¿Cuáles son sus valores?"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Beneficios" class="form-label">Beneficios (uno por línea)</label>
+                <textarea asp-for="Beneficios" class="form-control" rows="4" placeholder="Seguro médico privado&#10;Horario flexible&#10;Home office 2 días a la semana"></textarea>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NumeroColaboradores" class="form-label">Número de colaboradores</label>
+                    <select asp-for="NumeroColaboradores" class="form-select">
+                        <option value="">Selecciona...</option>
+                        <option value="1-10">1-10</option>
+                        <option value="11-50">11-50</option>
+                        <option value="51-200">51-200</option>
+                        <option value="201-500">201-500</option>
+                        <option value="500+">500+</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="SectorEmpresarial" class="form-label">Sector / Rubro</label>
+                    <select asp-for="SectorEmpresarial" class="form-select">
+                        <option value="">Selecciona...</option>
+                        <option>Comercio y Ventas</option>
+                        <option>Tecnología</option>
+                        <option>Manufactura / Industria</option>
+                        <option>Construcción</option>
+                        <option>Servicios</option>
+                        <option>Salud</option>
+                        <option>Educación</option>
+                        <option>Turismo y Hotelería</option>
+                        <option>Agropecuario</option>
+                        <option>Transporte y Logística</option>
+                        <option>Finanzas</option>
+                        <option>Otro</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NombreContacto" class="form-label">Nombre de contacto</label>
+                    <input asp-for="NombreContacto" class="form-control" placeholder="Persona a contactar para temas comerciales" />
+                    <span asp-validation-for="NombreContacto" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="TelefonoContacto" class="form-label">Teléfono de contacto</label>
+                    <input asp-for="TelefonoContacto" class="form-control" placeholder="+505 8888 8888" />
+                    <span asp-validation-for="TelefonoContacto" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="fa-solid fa-share-nodes" style="color:var(--color-accent-500);"></i>
+                <h6 class="mb-0">Redes sociales</h6>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="FacebookUrl" class="form-label"><i class="fa-brands fa-facebook me-1"></i>Facebook</label>
+                    <input asp-for="FacebookUrl" class="form-control" placeholder="https://facebook.com/tuempresa" />
+                    <span asp-validation-for="FacebookUrl" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="InstagramUrl" class="form-label"><i class="fa-brands fa-instagram me-1"></i>Instagram</label>
+                    <input asp-for="InstagramUrl" class="form-control" placeholder="https://instagram.com/tuempresa" />
+                    <span asp-validation-for="InstagramUrl" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="LinkedInUrl" class="form-label"><i class="fa-brands fa-linkedin me-1"></i>LinkedIn</label>
+                    <input asp-for="LinkedInUrl" class="form-control" placeholder="https://linkedin.com/company/tuempresa" />
+                    <span asp-validation-for="LinkedInUrl" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="TiktokUrl" class="form-label"><i class="fa-brands fa-tiktok me-1"></i>TikTok</label>
+                    <input asp-for="TiktokUrl" class="form-control" placeholder="https://tiktok.com/@@tuempresa" />
+                    <span asp-validation-for="TiktokUrl" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn cj-btn-primary">Guardar cambios</button>
+        </form>
+    </div>
+
+    <!-- ---------- Galería ---------- -->
+    <div class="cj-card mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="fa-solid fa-images" style="color:var(--color-accent-500);"></i>
+            <h5 class="mb-0">Galería de fotos y videos</h5>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <h6 class="small text-secondary">Agregar foto</h6>
+                <form asp-controller="Empresa" asp-action="AgregarFotoGaleria" method="post" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                    <input type="text" name="titulo" class="form-control form-control-sm" placeholder="Título (opcional)" />
+                    <input type="file" name="foto" class="form-control form-control-sm" accept=".jpg,.jpeg,.png" required />
+                    <button type="submit" class="btn cj-btn-primary btn-sm">Subir foto</button>
+                </form>
+            </div>
+            <div class="col-md-6 mb-4">
+                <h6 class="small text-secondary">Agregar video</h6>
+                <form asp-controller="Empresa" asp-action="AgregarVideoGaleria" method="post" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                    <input type="text" name="titulo" class="form-control form-control-sm" placeholder="Título (opcional)" />
+                    <input type="file" name="video" class="form-control form-control-sm" accept=".mp4,.webm,.mov" required />
+                    <div class="form-text">Formatos: MP4, WEBM o MOV. Máximo 50 MB.</div>
+                    <button type="submit" class="btn cj-btn-primary btn-sm">Subir video</button>
+                </form>
+            </div>
+        </div>
+
+        @if (!galeria.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fa-regular fa-images fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+                <p class="small text-secondary mb-0">Aún no has agregado fotos ni videos.</p>
+            </div>
+        }
+        else
+        {
+            <div id="carruselGaleriaEdicion" class="carousel slide mb-2" data-bs-ride="false">
+                <div class="carousel-inner rounded" style="background:var(--color-white); border:1px solid var(--color-mist);">
+                    @for (var i = 0; i < galeria.Count; i++)
+                    {
+                        var item = galeria[i];
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <div class="position-relative">
+                                @if (item.TipoMedio == "Foto")
+                                {
+                                    <img src="@item.Url" class="d-block w-100" style="height:280px; object-fit:contain; background:var(--color-white);" />
+                                }
+                                else
+                                {
+                                    <video src="@item.Url" class="d-block w-100" style="height:280px; background:#000;" controls></video>
+                                }
+                                <form asp-controller="Empresa" asp-action="EliminarGaleria" method="post"
+                                      onsubmit="return confirm('¿Eliminar este elemento?');"
+                                      class="position-absolute top-0 end-0 m-2">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fa-solid fa-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="small text-secondary mt-1 text-center">@(item.Titulo ?? item.TipoMedio) &middot; @(i + 1) de @galeria.Count</div>
+                        </div>
+                    }
+                </div>
+
+                @if (galeria.Count > 1)
+                {
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carruselGaleriaEdicion" data-bs-slide="prev">
+                        <span class="d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:50%;background:var(--color-accent-500);">
+                            <i class="fa-solid fa-chevron-left" style="color:white;"></i>
+                        </span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carruselGaleriaEdicion" data-bs-slide="next">
+                        <span class="d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:50%;background:var(--color-accent-500);">
+                            <i class="fa-solid fa-chevron-right" style="color:white;"></i>
+                        </span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const inputLogoExt = document.getElementById('inputLogoExtendido');
+        const imgPreviewExt = document.getElementById('imgLogoPreviewExtendido');
+        const placeholderExt = document.getElementById('placeholderLogoExtendido');
+
+        inputLogoExt.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            const lector = new FileReader();
+            lector.onload = function (e) {
+                imgPreviewExt.src = e.target.result;
+                imgPreviewExt.style.display = 'block';
+                if (placeholderExt) placeholderExt.style.display = 'none';
+            };
+            lector.readAsDataURL(this.files[0]);
+        });
+    </script>
+}

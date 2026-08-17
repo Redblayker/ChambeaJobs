@@ -1,0 +1,285 @@
+@model CrmEmpresaDetalleDto
+@using ChambeaJobs.Domain.Enums
+@{
+    ViewData["Title"] = "CRM - " + Model.NombreEmpresa;
+    var est = ViewBag.Estadisticas as CrmEstadisticasEmpresaDto;
+    var diasEnPipeline = (DateTime.UtcNow - Model.FechaCreacion).Days;
+
+    // El "carril" visual de arriba solo muestra las etapas del embudo
+    // automático — las etapas manuales de ventas (Primer contacto,
+    // Negociación, etc.) se siguen pudiendo elegir desde "Editar", pero no
+    // tienen un lugar fijo en esta barra porque no todas las empresas pasan
+    // por ellas en el mismo orden.
+    var carrilEtapas = new[]
+    {
+        EtapaPipelineCrm.Prospecto,
+        EtapaPipelineCrm.EmpresaVerificada,
+        EtapaPipelineCrm.EmpresaActiva,
+        EtapaPipelineCrm.ClienteActivo
+    };
+    var etapaActualEnCarril = Array.IndexOf(carrilEtapas, Model.Etapa);
+    var etiquetasCarril = new Dictionary<EtapaPipelineCrm, string>
+    {
+        [EtapaPipelineCrm.Prospecto] = "Prospecto",
+        [EtapaPipelineCrm.EmpresaVerificada] = "Verificada",
+        [EtapaPipelineCrm.EmpresaActiva] = "Activa",
+        [EtapaPipelineCrm.ClienteActivo] = "Cliente"
+    };
+}
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success">@TempData["Exito"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="cj-crm-header">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <a asp-action="FasesProcesoComercial" class="text-decoration-none small text-secondary"><i class="fa-solid fa-arrow-left"></i> Fases del proceso comercial</a>
+            <h2 class="mb-0 mt-1">
+                @Model.NombreEmpresa
+                @if (Model.EmpresaId.HasValue)
+                {
+                    <span class="badge bg-success-subtle text-success align-middle" style="font-size:0.6rem;">Registrada en la plataforma</span>
+                }
+            </h2>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Editar" asp-route-id="@Model.Id" class="btn cj-btn-outline"><i class="fa-solid fa-pen"></i> Editar</a>
+            <form asp-action="Eliminar" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('¿Eliminar esta empresa del CRM? Esta acción no se puede deshacer.');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+            </form>
+        </div>
+    </div>
+
+    @if (etapaActualEnCarril >= 0)
+    {
+        <div class="cj-crm-carril">
+            @for (int i = 0; i < carrilEtapas.Length; i++)
+            {
+                var completada = i < etapaActualEnCarril;
+                var actual = i == etapaActualEnCarril;
+                <div class="cj-crm-carril-paso @(completada ? "completado" : "") @(actual ? "actual" : "")">
+                    <span class="cj-crm-carril-numero">@(completada ? "✓" : (i + 1).ToString())</span>
+                    <span class="cj-crm-carril-texto">@etiquetasCarril[carrilEtapas[i]]</span>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <span class="badge bg-secondary-subtle text-secondary">@Model.Etapa</span>
+    }
+</div>
+
+<div class="row g-2 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="cj-crm-metrica">
+            <div class="cj-crm-metrica-valor">@diasEnPipeline</div>
+            <div class="cj-crm-metrica-label">Días en el pipeline</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="cj-crm-metrica" style="border-left-color: var(--color-accent-500);">
+            <div class="cj-crm-metrica-valor">@Model.Actividades.Count</div>
+            <div class="cj-crm-metrica-label">Actividades registradas</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="cj-crm-metrica" style="border-left-color: #16a34a;">
+            <div class="cj-crm-metrica-valor">@(est?.VacantesActivas ?? 0)</div>
+            <div class="cj-crm-metrica-label">Vacantes activas</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="cj-crm-metrica" style="border-left-color: #9333ea;">
+            <div class="cj-crm-metrica-valor">@(est?.PostulacionesRecibidas ?? 0)</div>
+            <div class="cj-crm-metrica-label">Postulaciones recibidas</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="cj-card mb-3">
+            <h6 class="text-uppercase text-secondary mb-3" style="font-size:0.72rem; letter-spacing:.04em;">Información de contacto</h6>
+            <p class="mb-1"><strong>Contacto:</strong> @(Model.ContactoPrincipal ?? "—")</p>
+            <p class="mb-1"><strong>Teléfono:</strong> @(Model.Telefono ?? "—")</p>
+            <p class="mb-1"><strong>Correo:</strong> @(Model.Correo ?? "—")</p>
+            <p class="mb-1"><strong>RUC:</strong> @(Model.RUC ?? "—")</p>
+            <p class="mb-1"><strong>Dirección:</strong> @(Model.Direccion ?? "—")</p>
+            <p class="mb-1"><strong>Sector:</strong> @(Model.SectorEmpresarial ?? "—")</p>
+            <p class="mb-1"><strong>Tamaño:</strong> @(Model.TamanoEmpresa ?? "—")</p>
+            <p class="mb-1"><strong>Sitio web:</strong> @(Model.SitioWeb ?? "—")</p>
+            <p class="mb-0"><strong>Redes:</strong> @(Model.RedesSociales ?? "—")</p>
+        </div>
+
+        @if (Model.EmpresaId.HasValue && est is not null)
+        {
+            <div class="cj-card mb-3">
+                <h6 class="text-uppercase text-secondary mb-3" style="font-size:0.72rem; letter-spacing:.04em;">Plan y actividad</h6>
+                @if (Model.PlanActual != null)
+                {
+                    <p class="mb-1"><strong>Plan:</strong> @Model.PlanActual (@Model.PlanEstado)</p>
+                    <p class="mb-1"><strong>Vence:</strong> @Model.PlanFechaVencimiento?.ToString("dd/MM/yyyy")</p>
+                }
+                else
+                {
+                    <p class="text-secondary small mb-1">Sin paquetes comprados todavía.</p>
+                }
+                <p class="mb-1"><strong>Total invertido:</strong> $@est.TotalInvertido.ToString("0.00")</p>
+                <p class="mb-1"><strong>Candidatos contratados:</strong> @est.CandidatosContratados</p>
+                <p class="mb-0">
+                    <strong>Último inicio de sesión:</strong> @(est.UltimoInicioSesion?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")
+                    @if (est.UltimoInicioSesion is null || (DateTime.UtcNow - est.UltimoInicioSesion.Value).TotalDays >= 30)
+                    {
+                        <span class="badge bg-danger-subtle text-danger d-block mt-1" style="width:fit-content;">⚠ Inactiva hace 30+ días</span>
+                    }
+                </p>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+        {
+            <div class="cj-card">
+                <h6 class="text-uppercase text-secondary mb-2" style="font-size:0.72rem; letter-spacing:.04em;">Observaciones</h6>
+                <p class="mb-0 small">@Model.Observaciones</p>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-8">
+        <ul class="nav nav-tabs mb-3" id="cj-crm-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-actividad" type="button">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Actividad
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-archivos" type="button">
+                    <i class="fa-solid fa-paperclip"></i> Archivos <span class="badge bg-secondary-subtle text-secondary">@Model.ArchivosAdjuntos.Count</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-actividad">
+                <div class="cj-card mb-3">
+                    <h6 class="text-uppercase text-secondary mb-3" style="font-size:0.72rem; letter-spacing:.04em;">Registrar actividad</h6>
+                    <form asp-action="RegistrarActividad" asp-route-id="@Model.Id" method="post" class="row g-2">
+                        @Html.AntiForgeryToken()
+                        <div class="col-md-4">
+                            <select name="Tipo" class="form-select" required>
+                                @foreach (TipoActividadCrm t in Enum.GetValues(typeof(TipoActividadCrm)))
+                                {
+                                    <option value="@((int)t)">@t</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="datetime-local" name="FechaActividad" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn cj-btn-primary w-100">Registrar</button>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="Descripcion" class="form-control" rows="2" placeholder="Detalle de la actividad..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="cj-crm-linea-tiempo">
+                    @if (!Model.Actividades.Any())
+                    {
+                        <p class="text-secondary small mb-0">Todavía no hay actividades registradas.</p>
+                    }
+                    else
+                    {
+                        @foreach (var a in Model.Actividades)
+                        {
+                            <div class="cj-crm-linea-item">
+                                <div class="cj-crm-linea-punto"></div>
+                                <div class="cj-crm-linea-contenido">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="badge bg-primary-subtle text-primary">@a.Tipo</span>
+                                        <small class="text-secondary">@a.FechaActividad.ToString("dd/MM/yyyy HH:mm") — @a.UsuarioNombre</small>
+                                    </div>
+                                    <div class="small mt-1">@a.Descripcion</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-archivos">
+                <div class="cj-card">
+                    <form asp-action="SubirArchivo" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="row g-2 mb-3">
+                        @Html.AntiForgeryToken()
+                        <div class="col-md-5"><input type="file" name="archivo" class="form-control form-control-sm" required /></div>
+                        <div class="col-md-5"><input type="text" name="descripcion" class="form-control form-control-sm" placeholder="Descripción (opcional)" /></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-sm cj-btn-primary w-100">Subir</button></div>
+                    </form>
+                    @if (!Model.ArchivosAdjuntos.Any())
+                    {
+                        <p class="text-secondary small mb-0">Sin archivos adjuntos todavía.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var a in Model.ArchivosAdjuntos)
+                            {
+                                <li class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                    <a href="@a.RutaArchivo" target="_blank" class="small"><i class="fa-solid fa-paperclip"></i> @a.NombreOriginal</a>
+                                    <form asp-action="EliminarArchivo" asp-route-id="@Model.Id" asp-route-archivoId="@a.Id" method="post" onsubmit="return confirm('¿Eliminar este archivo?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cj-crm-carril { display: flex; align-items: center; margin-top: 8px; }
+    .cj-crm-carril-paso {
+        flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+        background: var(--color-mist-soft); position: relative; font-size: 0.8rem; font-weight: 600; color: var(--color-slate-soft);
+    }
+    .cj-crm-carril-paso:not(:last-child)::after {
+        content: ""; position: absolute; right: -10px; top: 50%; transform: translateY(-50%) rotate(45deg);
+        width: 16px; height: 16px; background: var(--color-mist-soft); z-index: 1;
+        border-right: 1px solid #fff; border-top: 1px solid #fff;
+    }
+    .cj-crm-carril-paso.completado { background: var(--color-primary-700); color: #fff; }
+    .cj-crm-carril-paso.completado::after { background: var(--color-primary-700); }
+    .cj-crm-carril-paso.actual { background: var(--color-accent-500); color: #fff; }
+    .cj-crm-carril-paso.actual::after { background: var(--color-accent-500); }
+    .cj-crm-carril-numero {
+        width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.25);
+        display: flex; align-items: center; justify-content: center; font-size: 0.68rem; flex-shrink: 0;
+    }
+    .cj-crm-carril-paso:not(.completado):not(.actual) .cj-crm-carril-numero { background: #fff; border: 1px solid var(--color-border); color: var(--color-slate-soft); }
+
+    .cj-crm-metrica { background: #fff; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary-700); border-radius: 10px; padding: 14px 16px; height: 100%; }
+    .cj-crm-metrica-valor { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .cj-crm-metrica-label { font-size: 0.72rem; color: var(--color-slate-soft); margin-top: 4px; }
+
+    .cj-crm-linea-tiempo { position: relative; padding-left: 8px; }
+    .cj-crm-linea-item { display: flex; gap: 12px; padding-bottom: 16px; position: relative; }
+    .cj-crm-linea-item:not(:last-child)::before {
+        content: ""; position: absolute; left: 5px; top: 16px; bottom: 0; width: 2px; background: var(--color-border);
+    }
+    .cj-crm-linea-punto { width: 12px; height: 12px; border-radius: 50%; background: var(--color-accent-500); margin-top: 4px; flex-shrink: 0; }
+    .cj-crm-linea-contenido { flex: 1; background: #fff; border: 1px solid var(--color-border); border-radius: 8px; padding: 8px 12px; }
+</style>

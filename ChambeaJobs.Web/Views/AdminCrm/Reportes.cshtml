@@ -1,0 +1,219 @@
+@model CrmReporteDto
+@{
+    ViewData["Title"] = "CRM - Reportes";
+    var totalPipeline = Model.PorEtapa.Sum(e => e.Cantidad);
+    var totalSectores = Model.PorSector.Sum(e => e.Cantidad);
+}
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+        <h2 class="mb-1">Reportes del CRM</h2>
+        <p class="text-secondary small mb-0">Panorama comercial completo, actualizado en tiempo real.</p>
+    </div>
+    <button type="button" class="btn cj-btn-primary" data-bs-toggle="modal" data-bs-target="#modalExportarPdf">
+        <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+    </button>
+</div>
+
+<div class="modal fade" id="modalExportarPdf" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="ExportarReporte" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            @{ var opciones = new CrmReporteExportOpcionesDto(); }
+            <div class="modal-header">
+                <h5 class="modal-title">Exportar reporte a PDF</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-secondary small">Elige qué secciones incluir en el PDF:</p>
+                <div class="form-check mb-2">
+                    <input asp-for="@opciones.IncluirRendimiento" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@opciones.IncluirRendimiento">Rendimiento comercial</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input asp-for="@opciones.IncluirIngresos" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@opciones.IncluirIngresos">Ingresos y actividad</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input asp-for="@opciones.IncluirSectores" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@opciones.IncluirSectores">Empresas por sector</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input asp-for="@opciones.IncluirAlertas" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@opciones.IncluirAlertas">Alertas automáticas</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="@opciones.IncluirListaEmpresas" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@opciones.IncluirListaEmpresas">Listado completo de empresas</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn cj-btn-outline" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn cj-btn-primary"><i class="fa-solid fa-download"></i> Descargar PDF</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Alertas.Any())
+{
+    <div class="cj-crm-seccion mb-2">
+        <div class="cj-crm-seccion-titulo"><span class="cj-crm-seccion-icono" style="background:#f59e0b;"></span> Alertas automáticas (@Model.Alertas.Count)</div>
+        <ul class="list-unstyled mb-0 mt-2">
+            @foreach (var alerta in Model.Alertas)
+            {
+                var claseColor = alerta.Severidad == "danger" ? "text-danger" : alerta.Severidad == "warning" ? "text-warning" : "text-secondary";
+                <li class="border-bottom py-2 @claseColor">
+                    <a href="@Url.Action("Detalle", "AdminCrm", new { id = alerta.CrmEmpresaId })" class="text-decoration-none">
+                        <i class="fa-solid fa-circle-exclamation"></i> @alerta.Mensaje
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+<!-- ---------- Sección: Rendimiento comercial ---------- -->
+<div class="cj-crm-seccion mb-2">
+    <div class="cj-crm-seccion-titulo"><span class="cj-crm-seccion-icono" style="background:var(--color-primary-700);"></span> Rendimiento comercial</div>
+    <div class="row g-3 mt-1">
+        <div class="col-lg-3">
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-building text-primary"></i>
+                <div><div class="cj-crm-stat-valor">@Model.TotalEmpresas</div><div class="cj-crm-stat-label">Total empresas</div></div>
+            </div>
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-user-check" style="color:#16a34a;"></i>
+                <div><div class="cj-crm-stat-valor">@Model.TotalClientesActivos</div><div class="cj-crm-stat-label">Clientes activos</div></div>
+            </div>
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-user-xmark" style="color:#dc2626;"></i>
+                <div><div class="cj-crm-stat-valor">@Model.TotalClientesInactivos</div><div class="cj-crm-stat-label">Clientes inactivos</div></div>
+            </div>
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-arrow-trend-up" style="color:var(--color-accent-500);"></i>
+                <div><div class="cj-crm-stat-valor">@Model.TasaConversionProspectoACliente%</div><div class="cj-crm-stat-label">Tasa de conversión</div></div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="cj-crm-canvas-caja">
+                <canvas id="chartEtapas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ---------- Sección: Ingresos y actividad ---------- -->
+<div class="cj-crm-seccion mb-2">
+    <div class="cj-crm-seccion-titulo"><span class="cj-crm-seccion-icono" style="background:#16a34a;"></span> Ingresos y actividad</div>
+    <div class="row g-3 mt-1">
+        <div class="col-lg-3">
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-sack-dollar" style="color:#16a34a;"></i>
+                <div><div class="cj-crm-stat-valor">$@Model.IngresosMesActual.ToString("0.00")</div><div class="cj-crm-stat-label">Ingresos del mes</div></div>
+            </div>
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-coins" style="color:#16a34a;"></i>
+                <div><div class="cj-crm-stat-valor">$@Model.IngresosAnioActual.ToString("0.00")</div><div class="cj-crm-stat-label">Ingresos del año</div></div>
+            </div>
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-briefcase" style="color:#9333ea;"></i>
+                <div><div class="cj-crm-stat-valor">@Model.VacantesPublicadasTotal</div><div class="cj-crm-stat-label">Vacantes publicadas</div></div>
+            </div>
+            <div class="cj-crm-stat-fila">
+                <i class="fa-solid fa-users" style="color:#0891b2;"></i>
+                <div><div class="cj-crm-stat-valor">@Model.CandidatosRegistrados / @Model.PostulacionesTotal</div><div class="cj-crm-stat-label">Candidatos / Postulaciones</div></div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="cj-crm-canvas-caja" style="height:150px;">
+                <canvas id="chartPlanes"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ---------- Sección: Empresas por sector (dona + leyenda lateral con %) ---------- -->
+<div class="cj-crm-seccion">
+    <div class="cj-crm-seccion-titulo"><span class="cj-crm-seccion-icono" style="background:var(--color-accent-500);"></span> Empresas por sector</div>
+    <div class="row g-3 mt-1 align-items-center">
+        <div class="col-lg-6">
+            <div class="cj-crm-canvas-caja" style="height:170px;">
+                <canvas id="chartSectores"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <ul class="cj-crm-leyenda">
+                @{ var coloresLeyenda = new[] { "#14497A", "#F0661E", "#16a34a", "#dc2626", "#9333ea", "#0891b2", "#ca8a04", "#64748b" }; }
+                @for (int i = 0; i < Model.PorSector.Count; i++)
+                {
+                    var porcentaje = totalSectores == 0 ? 0 : Math.Round(Model.PorSector[i].Cantidad * 100.0 / totalSectores, 0);
+                    <li>
+                        <span class="cj-crm-leyenda-punto" style="background:@coloresLeyenda[i % coloresLeyenda.Length];"></span>
+                        <span class="cj-crm-leyenda-texto">@Model.PorSector[i].Etiqueta</span>
+                        <span class="cj-crm-leyenda-pct">@porcentaje%</span>
+                    </li>
+                }
+                @if (!Model.PorSector.Any())
+                {
+                    <li class="text-secondary small">Todavía no hay empresas con sector registrado.</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cj-crm-canvas-caja { position: relative; }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        new Chart(document.getElementById('chartEtapas'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorEtapa.Select(e => e.Etiqueta))),
+                datasets: [{
+                    label: 'Empresas',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorEtapa.Select(e => e.Cantidad))),
+                    backgroundColor: '#14497A',
+                    borderRadius: 4,
+                    maxBarThickness: 46
+                }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+        });
+
+        new Chart(document.getElementById('chartPlanes'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PlanesMasVendidos.Select(e => e.Etiqueta))),
+                datasets: [{
+                    label: 'Paquetes vendidos',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PlanesMasVendidos.Select(e => e.Cantidad))),
+                    backgroundColor: '#F0661E',
+                    borderRadius: 4,
+                    maxBarThickness: 36
+                }]
+            },
+            options: { maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+
+        // Dona sin leyenda propia de Chart.js — la leyenda con porcentajes
+        // ya se dibuja aparte en HTML, al lado, como en la referencia.
+        new Chart(document.getElementById('chartSectores'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorSector.Select(e => e.Etiqueta))),
+                datasets: [{
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorSector.Select(e => e.Cantidad))),
+                    backgroundColor: ['#14497A', '#F0661E', '#16a34a', '#dc2626', '#9333ea', '#0891b2', '#ca8a04', '#64748b'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: { maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+        });
+    </script>
+}

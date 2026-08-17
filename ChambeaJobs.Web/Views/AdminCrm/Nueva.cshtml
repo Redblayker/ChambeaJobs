@@ -1,0 +1,14 @@
+@model CrmEmpresaFormDto
+@{
+    ViewData["Title"] = "CRM - Nueva empresa";
+}
+
+<h2 class="mb-1">Nueva empresa</h2>
+<p class="text-secondary small mb-3">Se agrega al pipeline como Prospecto.</p>
+
+<form asp-action="Nueva" method="post">
+    @Html.AntiForgeryToken()
+    <partial name="_Form" model="Model" />
+    <button type="submit" class="btn cj-btn-primary"><i class="fa-solid fa-check"></i> Guardar</button>
+    <a asp-action="FasesProcesoComercial" class="btn cj-btn-outline">Cancelar</a>
+</form>

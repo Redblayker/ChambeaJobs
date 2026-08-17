@@ -1,0 +1,114 @@
+@model List<VacanteDetalleDto>
+@{
+    ViewData["Title"] = "Buscar vacantes";
+    var categorias = ViewBag.Categorias as List<CategoriaOptionDto> ?? new();
+    var ubicaciones = ViewBag.Ubicaciones as List<UbicacionOptionDto> ?? new();
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Buscar vacantes</h2>
+    <p class="text-secondary mb-4">Explora las oportunidades activas y postúlate en un par de clics.</p>
+
+    <div class="cj-card mb-4" style="padding: var(--space-3);">
+        <form asp-controller="Vacante" asp-action="Buscar" method="get" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0" style="border-color:var(--color-border);">
+                        <i class="fa-solid fa-magnifying-glass" style="color:var(--color-slate-soft);"></i>
+                    </span>
+                    <input type="text" name="q" value="@ViewBag.PalabraClave" class="form-control border-start-0" placeholder="Puesto, palabra clave..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="categoriaId" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    @foreach (var c in categorias)
+                    {
+                        <option value="@c.Id" selected="@(ViewBag.CategoriaId == c.Id)">@c.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="ubicacionId" class="form-select">
+                    <option value="">Todas las ubicaciones</option>
+                    @foreach (var u in ubicaciones)
+                    {
+                        <option value="@u.Id" selected="@(ViewBag.UbicacionId == u.Id)">@u.NombreCompleto</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn cj-btn-primary w-100">Buscar</button>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="cj-card text-center py-5">
+            <i class="fa-solid fa-folder-open fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+            <h5 class="mb-1">No encontramos vacantes con esos filtros</h5>
+            <p class="small text-secondary mb-0">Intenta con otra palabra clave o quita algún filtro.</p>
+        </div>
+    }
+    else
+    {
+        <p class="small text-secondary mb-3">@Model.Count vacante@(Model.Count == 1 ? "" : "s") encontrada@(Model.Count == 1 ? "" : "s")</p>
+        <div class="row g-3">
+            @foreach (var v in Model)
+            {
+                <div class="col-md-6">
+                    <a asp-controller="Vacante" asp-action="Detalle" asp-route-id="@v.Id" class="text-decoration-none">
+                        <div class="cj-card cj-card-interactive h-100" style="position:relative; @(v.EsDestacada ? "border: 1.5px solid #F0B429;" : "")">
+                            @if (v.EsDestacada)
+                            {
+                                <span class="position-absolute" style="top:-8px; left:16px; background:#F0B429; color:#12161C; font-size:0.7rem; font-weight:700; padding:3px 12px; border-radius:var(--radius-full); box-shadow:var(--shadow-xs);">
+                                    <i class="fa-solid fa-star"></i> Destacada
+                                </span>
+                            }
+                            else if ((DateTime.UtcNow - v.FechaPublicacion).TotalDays <= 7)
+                            {
+                                <span class="position-absolute" style="top:-8px; left:16px; background:#7C3AED; color:white; font-size:0.7rem; font-weight:700; padding:3px 12px; border-radius:var(--radius-full); box-shadow:var(--shadow-xs);">
+                                    Nuevo
+                                </span>
+                            }
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="d-flex gap-3">
+                                    @if (!string.IsNullOrEmpty(v.EmpresaLogoUrl))
+                                    {
+                                        <img src="@v.EmpresaLogoUrl" style="width:56px; height:56px; border-radius:var(--radius-sm); object-fit:contain; background:white; border:1px solid var(--color-mist); padding:4px; flex-shrink:0;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                                             style="width:56px; height:56px; border-radius:var(--radius-sm); background:var(--color-primary-100);">
+                                            <i class="fa-solid fa-building" style="color:var(--color-primary-700);"></i>
+                                        </div>
+                                    }
+                                    <div>
+                                        <h5 class="mb-1" style="color:var(--color-text); font-size:1.05rem;">@v.Titulo</h5>
+                                        <div class="small text-secondary">@v.EmpresaNombre</div>
+                                    </div>
+                                </div>
+                                <span class="cj-badge cj-badge-info flex-shrink-0">@v.Modalidad</span>
+                            </div>
+
+                            @if (v.SalarioMin.HasValue || v.SalarioMax.HasValue)
+                            {
+                                <div class="small fw-semibold mt-2" style="color:var(--color-success);">
+                                    @(v.SalarioMin.HasValue ? $"C${v.SalarioMin:0}" : "") @(v.SalarioMin.HasValue && v.SalarioMax.HasValue ? " - " : "") @(v.SalarioMax.HasValue ? $"C${v.SalarioMax:0}" : "")
+                                </div>
+                            }
+
+                            <div class="d-flex gap-2 mt-3 flex-wrap">
+                                <span class="cj-badge cj-badge-info"><i class="fa-solid fa-location-dot" style="font-size:10px;"></i> @v.UbicacionNombre</span>
+                                <span class="cj-badge cj-badge-info">@v.CategoriaNombre</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
+

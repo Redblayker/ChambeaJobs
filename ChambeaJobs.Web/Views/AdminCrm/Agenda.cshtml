@@ -1,0 +1,82 @@
+@model List<CrmAgendaItemDto>
+@{
+    ViewData["Title"] = "CRM - Agenda";
+    var desde = (DateTime)ViewBag.Desde;
+    var hasta = (DateTime)ViewBag.Hasta;
+
+    var coloresPorTipo = new Dictionary<string, string>
+    {
+        ["Llamada"] = "#14497A",
+        ["Correo"] = "#0891b2",
+        ["Reunion"] = "#9333ea",
+        ["Videollamada"] = "#9333ea",
+        ["Visita"] = "#16a34a",
+        ["Seguimiento"] = "#F0661E",
+        ["Recordatorio"] = "#dc2626",
+        ["Nota"] = "#64748b"
+    };
+}
+
+<h2 class="mb-1">Agenda</h2>
+<p class="text-secondary small mb-3">Todas las actividades programadas del CRM, en orden.</p>
+
+<div class="cj-crm-seccion mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label class="form-label small mb-1 text-secondary">Desde</label>
+            <input type="date" name="desde" value="@desde.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1 text-secondary">Hasta</label>
+            <input type="date" name="hasta" value="@hasta.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn cj-btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="cj-crm-seccion text-center text-secondary py-5">
+        <i class="fa-regular fa-calendar fa-2x mb-2 d-block" style="opacity:.4;"></i>
+        No hay actividades programadas en este rango.
+    </div>
+}
+else
+{
+    foreach (var grupo in Model.GroupBy(m => m.FechaActividad.Date))
+    {
+        <div class="cj-crm-seccion mb-3">
+            <div class="cj-crm-seccion-titulo mb-2">
+                <span class="cj-crm-seccion-icono" style="background:var(--color-primary-700);"></span>
+                @grupo.Key.ToString("dddd dd 'de' MMMM", new System.Globalization.CultureInfo("es-NI"))
+            </div>
+            @foreach (var item in grupo)
+            {
+                var color = coloresPorTipo.TryGetValue(item.Tipo.ToString(), out var c) ? c : "#64748b";
+                <a href="@Url.Action("Detalle", new { id = item.CrmEmpresaId })" class="cj-crm-agenda-item">
+                    <span class="cj-crm-agenda-hora">@item.FechaActividad.ToString("HH:mm")</span>
+                    <span class="cj-crm-agenda-linea" style="background:@color;"></span>
+                    <div class="flex-grow-1">
+                        <span class="badge" style="background:@color; color:#fff; font-size:0.65rem;">@item.Tipo</span>
+                        <strong class="ms-1">@item.NombreEmpresa</strong>
+                        <div class="small text-secondary">@item.Descripcion</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-secondary" style="font-size:0.75rem;"></i>
+                </a>
+            }
+        </div>
+    }
+}
+
+<style>
+    .cj-crm-agenda-item {
+        display: flex; align-items: center; gap: 12px; padding: 10px 8px;
+        text-decoration: none; color: inherit; border-bottom: 1px solid var(--color-border, #E5E8EC);
+    }
+    .cj-crm-agenda-item:last-child { border-bottom: none; }
+    .cj-crm-agenda-item:hover { background: var(--color-mist-soft, #F1F3F5); border-radius: 8px; }
+    .cj-crm-agenda-hora { font-size: 0.78rem; font-weight: 700; color: var(--color-slate-soft, #8892A0); width: 42px; flex-shrink: 0; }
+    .cj-crm-agenda-linea { width: 4px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+</style>

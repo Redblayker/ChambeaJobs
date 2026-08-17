@@ -1,0 +1,6 @@
+@{
+    // Inicio, Términos, Privacidad y las páginas de error las puede ver
+    // cualquiera, con sesión o sin ella — igual que en Vacante, el layout
+    // se elige según si hay sesión activa.
+    Layout = User.Identity?.IsAuthenticated == true ? "_LayoutApp" : "_Layout";
+}

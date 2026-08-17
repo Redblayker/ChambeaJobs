@@ -1,0 +1,42 @@
+@model List<AuditoriaDto>
+@{
+    ViewData["Title"] = "Auditoría";
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Auditoría</h2>
+    <p class="text-secondary mb-4">Registro de acciones críticas realizadas por administradores.</p>
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <p class="small text-secondary mb-0">Aún no hay eventos registrados.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+<table class="table align-middle">
+                <thead>
+                    <tr><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Id afectado</th><th>Fecha</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td class="small text-secondary">@a.UsuarioCorreo</td>
+                            <td>
+                                <span class="cj-badge @(a.Accion.Contains("Suspender") || a.Accion.Contains("Eliminar") || a.Accion.Contains("Rechazar") ? "cj-badge-error" : a.Accion.Contains("Activar") || a.Accion.Contains("Aprobar") ? "cj-badge-success" : a.Accion.Contains("Editar") ? "cj-badge-warning" : "cj-badge-info")">
+                                    @a.Accion
+                                </span>
+                            </td>
+                            <td>@a.EntidadAfectada</td>
+                            <td class="text-secondary">#@a.EntidadId</td>
+                            <td class="text-secondary">@a.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+</div>
+        }
+    </div>
+</div>

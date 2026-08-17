@@ -1,0 +1,86 @@
+@model CrmEmpresaFormDto
+@using ChambeaJobs.Domain.Enums
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="cj-crm-seccion mb-3">
+    <div class="cj-crm-seccion-titulo mb-3"><span class="cj-crm-seccion-icono" style="background:var(--color-primary-700);"></span> Datos generales</div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-building text-secondary me-1"></i>Nombre de la empresa</label>
+            <input asp-for="NombreEmpresa" class="form-control" />
+            <span asp-validation-for="NombreEmpresa" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-table-columns text-secondary me-1"></i>Etapa</label>
+            <select asp-for="Etapa" class="form-select">
+                @foreach (EtapaPipelineCrm e in Enum.GetValues(typeof(EtapaPipelineCrm)))
+                {
+                    <option value="@((int)e)">@e</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-industry text-secondary me-1"></i>Sector empresarial</label>
+            <input asp-for="SectorEmpresarial" class="form-control" placeholder="Ej. Comercio, Manufactura, Tecnología..." />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-users text-secondary me-1"></i>Tamaño de empresa</label>
+            <select asp-for="TamanoEmpresa" class="form-select">
+                <option value="">Selecciona...</option>
+                <option value="1-10">1-10</option>
+                <option value="11-50">11-50</option>
+                <option value="51-200">51-200</option>
+                <option value="201-500">201-500</option>
+                <option value="500+">500+</option>
+            </select>
+            <div class="form-text">Se sincroniza automáticamente desde el perfil de la empresa, si ya lo llenó.</div>
+        </div>
+    </div>
+</div>
+
+<div class="cj-crm-seccion mb-3">
+    <div class="cj-crm-seccion-titulo mb-3"><span class="cj-crm-seccion-icono" style="background:#0891b2;"></span> Contacto</div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-user text-secondary me-1"></i>Contacto principal</label>
+            <input asp-for="ContactoPrincipal" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-phone text-secondary me-1"></i>Teléfono</label>
+            <input asp-for="Telefono" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-envelope text-secondary me-1"></i>Correo</label>
+            <input asp-for="Correo" class="form-control" />
+            <span asp-validation-for="Correo" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-id-card text-secondary me-1"></i>RUC</label>
+            <input asp-for="RUC" class="form-control" />
+        </div>
+        <div class="col-12 mb-3">
+            <label class="form-label"><i class="fa-solid fa-location-dot text-secondary me-1"></i>Dirección</label>
+            <input asp-for="Direccion" class="form-control" />
+        </div>
+    </div>
+</div>
+
+<div class="cj-crm-seccion mb-3">
+    <div class="cj-crm-seccion-titulo mb-3"><span class="cj-crm-seccion-icono" style="background:var(--color-accent-500);"></span> Presencia digital</div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-globe text-secondary me-1"></i>Sitio web</label>
+            <input asp-for="SitioWeb" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa-solid fa-share-nodes text-secondary me-1"></i>Redes sociales</label>
+            <input asp-for="RedesSociales" class="form-control" placeholder="Facebook, Instagram, LinkedIn..." />
+        </div>
+    </div>
+</div>
+
+<div class="cj-crm-seccion mb-3">
+    <div class="cj-crm-seccion-titulo mb-3"><span class="cj-crm-seccion-icono" style="background:#64748b;"></span> Observaciones</div>
+    <textarea asp-for="Observaciones" class="form-control" rows="3" placeholder="Notas internas sobre esta empresa..."></textarea>
+</div>

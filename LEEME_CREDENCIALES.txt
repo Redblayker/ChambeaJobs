@@ -1,0 +1,19 @@
+
+1) SUPER ADMINISTRADOR — SOLO ENTORNO LOCAL (Development)
+------------------------------------------------------------
+Configurado en: ChambeaJobs.Web/Properties/launchSettings.json
+(este archivo NO se publica al servidor — solo aplica cuando corres el
+proyecto en tu computadora con F5)
+
+  Correo:      superadmin@chambeajobs.com
+  Contraseña:  Cazaputas43ka
+  Rol:         SuperAdministrador
+  2FA:         Pausado temporalmente para pruebas (ver Program.cs,
+               variable "obligar2FASuperAdmin" = false)
+
+
+2) SUPER ADMINISTRADOR — PRODUCCIÓN (MonsterASP)
+------------------------------------------------------------
+  Correo:      admin@chambeajobs.com
+  Contraseña:  ChambeaJobs#2026
+  Rol:         Administrador

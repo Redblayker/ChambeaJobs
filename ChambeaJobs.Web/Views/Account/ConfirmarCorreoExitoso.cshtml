@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "Correo confirmado";
+}
+
+<div class="container py-5" style="min-height:70vh; display:flex; align-items:center;">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6">
+            <div class="cj-card text-center" style="box-shadow: var(--shadow-md);">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3 mx-auto"
+                     style="width:72px; height:72px; border-radius:50%; background:#DEF4E9;">
+                    <i class="fa-solid fa-circle-check fa-lg" style="color: var(--color-success);"></i>
+                </div>
+                <h2 class="mb-3">¡Correo confirmado!</h2>
+                <p class="text-secondary mb-4">
+                    Tu cuenta ya está activa. Ya puedes iniciar sesión con tu correo y contraseña.
+                </p>
+                <a asp-controller="Account" asp-action="Login" class="btn cj-btn-primary">Iniciar sesión</a>
+            </div>
+        </div>
+    </div>
+</div>

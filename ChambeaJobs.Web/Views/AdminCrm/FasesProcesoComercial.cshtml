@@ -1,0 +1,117 @@
+@model List<CrmPipelineColumnaDto>
+@{
+    ViewData["Title"] = "CRM - Fases del proceso comercial";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Fases del proceso comercial</h2>
+        <p class="text-secondary mb-0">Arrastra las empresas entre columnas para cambiar su etapa.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Lista" class="btn cj-btn-outline"><i class="fa-solid fa-list"></i> Ver como lista</a>
+        <a asp-action="Nueva" class="btn cj-btn-primary"><i class="fa-solid fa-plus"></i> Nueva empresa</a>
+    </div>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success">@TempData["Exito"]</div>
+}
+
+<div class="cj-crm-pipeline" id="pipeline-kanban">
+    @foreach (var columna in Model)
+    {
+        <div class="cj-crm-columna" data-etapa="@((int)columna.Etapa)">
+            <div class="cj-crm-columna-titulo">
+                @columna.EtiquetaEtapa
+                <span class="badge bg-secondary">@columna.Empresas.Count</span>
+            </div>
+            <div class="cj-crm-columna-body" data-etapa-drop="@((int)columna.Etapa)">
+                @foreach (var empresa in columna.Empresas)
+                {
+                    <a href="@Url.Action("Detalle", new { id = empresa.Id })"
+                       class="cj-crm-tarjeta" draggable="true" data-id="@empresa.Id">
+                        <div class="fw-semibold small">@empresa.NombreEmpresa</div>
+                        @if (!string.IsNullOrWhiteSpace(empresa.ContactoPrincipal))
+                        {
+                            <div class="text-secondary" style="font-size:0.78rem;">@empresa.ContactoPrincipal</div>
+                        }
+                        @if (empresa.EstaRegistradaEnPlataforma)
+                        {
+                            <span class="badge bg-success-subtle text-success" style="font-size:0.65rem;">Registrada</span>
+                        }
+                    </a>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .cj-crm-pipeline { display: flex; flex-direction: column; gap: 8px; }
+    .cj-crm-columna {
+        display: flex; align-items: flex-start; gap: 14px;
+        background: var(--color-mist-soft, #f5f6fa); border-radius: 10px; padding: 10px 14px;
+        border-left: 4px solid var(--color-primary-700, #14497A); min-width: 0;
+    }
+    .cj-crm-columna-titulo {
+        font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .02em;
+        color: var(--color-primary-700, #14497A); display: flex; align-items: center; gap: 6px;
+        flex: 0 0 170px; padding-top: 8px;
+    }
+    .cj-crm-columna-body { min-height: 50px; flex: 1; display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+    .cj-crm-columna-body.arrastrando-sobre { outline: 2px dashed var(--color-accent-500, #F0661E); outline-offset: 2px; border-radius: 8px; }
+    .cj-crm-tarjeta { display: block; width: 140px; background: #fff; border-radius: 8px; padding: 8px 10px; text-decoration: none; color: inherit; box-shadow: 0 1px 2px rgba(0,0,0,.06); cursor: grab; border-left: 3px solid var(--color-accent-500, #F0661E); font-size: 0.8rem; }
+    .cj-crm-tarjeta:active { cursor: grabbing; }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            let idArrastrado = null;
+
+            document.querySelectorAll('.cj-crm-tarjeta').forEach(function (tarjeta) {
+                tarjeta.addEventListener('dragstart', function (e) {
+                    idArrastrado = tarjeta.getAttribute('data-id');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+            });
+
+            document.querySelectorAll('.cj-crm-columna-body').forEach(function (columna) {
+                columna.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    columna.classList.add('arrastrando-sobre');
+                });
+                columna.addEventListener('dragleave', function () {
+                    columna.classList.remove('arrastrando-sobre');
+                });
+                columna.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    columna.classList.remove('arrastrando-sobre');
+                    if (!idArrastrado) return;
+
+                    const nuevaEtapa = parseInt(columna.getAttribute('data-etapa-drop'));
+
+                    fetch('@Url.Action("MoverEtapa")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: JSON.stringify({ crmEmpresaId: parseInt(idArrastrado), nuevaEtapa: nuevaEtapa })
+                    }).then(function (r) {
+                        if (r.ok) {
+                            location.reload();
+                        } else {
+                            alert('No se pudo mover la empresa. Intenta de nuevo.');
+                        }
+                    });
+
+                    idArrastrado = null;
+                });
+            });
+        })();
+    </script>
+    <form style="display:none;">@Html.AntiForgeryToken()</form>
+}

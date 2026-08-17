@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Video entrevista";
+    var sala = ViewBag.SalaVideollamadaId as string;
+    var vacanteId = ViewBag.VacanteId;
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+        <h4 class="mb-0"><i class="fa-solid fa-video me-2" style="color:var(--color-accent-500);"></i>Video entrevista</h4>
+        <a asp-controller="Empresa" asp-action="CandidatosPostulados" asp-route-vacanteId="@vacanteId" class="btn btn-sm cj-btn-outline">
+            <i class="fa-solid fa-arrow-left me-1"></i> Volver a Candidatos
+        </a>
+    </div>
+
+    <div class="alert alert-info small mx-2">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        Comparte esta pantalla con el candidato — ambos deben entrar aquí para verse en la misma videollamada. No necesitas instalar nada.
+    </div>
+
+    <div id="jitsi-contenedor" style="width:100%; height:75vh; border-radius:var(--radius-md); overflow:hidden; background:#000;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://meet.jit.si/external_api.js"></script>
+    <script>
+        new JitsiMeetExternalAPI("meet.jit.si", {
+            roomName: "@sala",
+            parentNode: document.querySelector('#jitsi-contenedor'),
+            width: "100%",
+            height: "100%",
+            configOverwrite: { prejoinPageEnabled: false },
+            interfaceConfigOverwrite: { SHOW_JITSI_WATERMARK: false }
+        });
+    </script>
+}

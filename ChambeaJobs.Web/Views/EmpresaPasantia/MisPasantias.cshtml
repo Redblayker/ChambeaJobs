@@ -1,0 +1,120 @@
+@model List<PasantiaListItemDto>
+@{
+    ViewData["Title"] = "Mis pasantías";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px; border-radius:var(--radius-md); background:#F3EBFB;">
+                <i class="fa-solid fa-graduation-cap" style="color:#7C3AED;"></i>
+            </div>
+            <h2 class="mb-0">Mis Pasantías</h2>
+        </div>
+        <a asp-controller="EmpresaPasantia" asp-action="Publicar" class="btn" style="background:#7C3AED; color:white;">
+            <i class="fa-solid fa-plus me-1"></i> Publicar pasantía
+        </a>
+    </div>
+
+    @if (Model.Any())
+    {
+        var activas = Model.Count(p => p.Estado == "Activa");
+        var cerradas = Model.Count(p => p.Estado != "Activa");
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Pasantías activas</div>
+                        <div class="cj-estado-sub">@activas publicándose ahora</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-circle-check"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Total histórico</div>
+                        <div class="cj-estado-sub">@Model.Count pasantías publicadas</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-graduation-cap"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cj-estado-tarjeta bien">
+                    <div>
+                        <div class="cj-estado-titulo">Cerradas</div>
+                        <div class="cj-estado-sub">@cerradas ya no reciben postulaciones</div>
+                    </div>
+                    <div class="cj-estado-carita"><i class="fa-solid fa-box-archive"></i></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fa-solid fa-graduation-cap fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+                <p class="small text-secondary mb-0">Aún no has publicado pasantías. <a asp-controller="EmpresaPasantia" asp-action="Publicar">Publica la primera</a>.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+<table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Categoría</th>
+                        <th>Publicada</th>
+                        <th>Postulantes</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@p.Titulo</td>
+                            <td>@p.CategoriaNombre</td>
+                            <td>@p.FechaPublicacion.ToString("dd/MM/yyyy")</td>
+                            <td><span class="cj-badge cj-badge-info">@p.NumeroPostulantes</span></td>
+                            <td><span class="cj-badge @(p.Estado == "Activa" ? "cj-badge-success" : "cj-badge-info")">@p.Estado</span></td>
+                            <td class="text-end">
+                                <a asp-controller="EmpresaPasantia" asp-action="Postulantes" asp-route-pasantiaId="@p.Id" class="btn btn-sm cj-btn-outline" style="color:#7C3AED; border-color:#7C3AED;" title="Ver postulantes">
+                                    <i class="fa-solid fa-users"></i> Postulantes
+                                </a>
+                                <a asp-controller="EmpresaPasantia" asp-action="Editar" asp-route-id="@p.Id" class="btn btn-sm" title="Editar">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                @if (p.Estado == "Activa")
+                                {
+                                    <form asp-controller="EmpresaPasantia" asp-action="Cerrar" method="post" class="d-inline" onsubmit="return confirm('¿Cerrar esta pasantía? Ya no aparecerá en las búsquedas.');">
+                                        <input type="hidden" name="id" value="@p.Id" />
+                                        <button type="submit" class="btn btn-sm" title="Cerrar"><i class="fa-solid fa-lock"></i></button>
+                                    </form>
+                                }
+                                <form asp-controller="EmpresaPasantia" asp-action="Eliminar" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta pasantía permanentemente?');">
+                                    <input type="hidden" name="id" value="@p.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+</div>
+        }
+    </div>
+</div>

@@ -1,0 +1,724 @@
+@using Microsoft.AspNetCore.Identity
+@using ChambeaJobs.Infrastructure.Identity
+@using ChambeaJobs.Application.Interfaces
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IConfiguration ConfiguracionGlobal
+@inject ICatalogoService CatalogoServiceGlobal
+@inject IPaqueteEmpresaService PaqueteEmpresaServiceGlobal
+@inject ICaptchaService CaptchaServiceGlobal
+@{
+    // El modal de login vive en el layout compartido (se puede abrir desde
+    // cualquier página), así que no puede depender del ViewBag que solo
+    // llena AccountController — se revisa la configuración directamente aquí.
+    var googleDisponibleGlobal = !string.IsNullOrWhiteSpace(ConfiguracionGlobal["Authentication:Google:ClientId"]);
+
+    // Los modales de registro (Candidato y Empresa) también viven aquí, por
+    // el mismo motivo — el de Empresa necesita las ubicaciones y planes
+    // disponibles, que antes solo se cargaban dentro del controlador de la
+    // página que ya no existe.
+    var ubicacionesGlobal = await CatalogoServiceGlobal.ObtenerUbicacionesAsync();
+    var planesGlobal = await PaqueteEmpresaServiceGlobal.ObtenerPlanesDisponiblesAsync();
+
+    // CAPTCHA (reCAPTCHA v2) en Login y Registro — mismo patrón de "si no
+    // está configurado, no se exige" que Google Sign-In y PayPal.
+    var captchaDisponibleGlobal = CaptchaServiceGlobal.CaptchaDisponible;
+    var captchaSiteKeyGlobal = CaptchaServiceGlobal.SiteKeyPublica;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - ChambeaJobs</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="icon" type="image/png" href="~/images/favicon-512.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @if (captchaDisponibleGlobal)
+    {
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    }
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg cj-navbar">
+        <div class="container">
+            <a class="navbar-brand cj-brand" asp-controller="Home" asp-action="Index">
+                Chambea<span class="cj-brand-accent">Jobs</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
+                    @if (User.IsInRole("Candidato"))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Candidato" asp-action="Perfil">Mi perfil</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Candidato" asp-action="MisPostulaciones">Mis postulaciones</a></li>
+                    }
+                    @if (User.IsInRole("Empresa"))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Empresa" asp-action="Dashboard">Panel</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Empresa" asp-action="MisVacantes">Mis vacantes</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Empresa" asp-action="PerfilExtendido">Mi empresa</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Soporte" asp-action="Contacto">Soporte</a></li>
+                    }
+                    @if ((User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador")))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Dashboard">Panel Admin</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="PagosPendientes">Pagos pendientes</a></li>
+                    }
+                </ul>
+                <ul class="navbar-nav align-items-lg-center gap-2">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <li class="nav-item">
+                            @await Component.InvokeAsync("NotificacionesBell")
+                        </li>
+                        <li class="nav-item">
+                            <span class="nav-link d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                                      style="width:28px; height:28px; border-radius:50%; background:var(--color-accent-500); color:white; font-size:0.75rem; font-weight:700;">
+                                    @(User.Identity!.Name != null ? User.Identity.Name.Substring(0, 1).ToUpper() : "?")
+                                </span>
+                                Hola, @User.Identity!.Name
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit" class="btn btn-sm cj-btn-outline-light">Cerrar sesión</button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><button type="button" class="btn btn-sm cj-btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalLogin">Iniciar sesión</button></li>
+                        <li class="nav-item"><button type="button" class="btn btn-sm cj-btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearCuenta">Crear cuenta</button></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="cj-main">
+        @RenderBody()
+    </main>
+
+    <footer class="cj-footer">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <h6>ChambeaJobs</h6>
+                    <p class="small mb-0">Conectando talento con oportunidades, de forma simple y directa.</p>
+                </div>
+                @if (!SignInManager.IsSignedIn(User))
+                {
+                    <div class="col-md-3 mb-3">
+                        <h6>Para Candidatos</h6>
+                        <ul class="list-unstyled small">
+                            <li>Crear cuenta</li>
+                            <li>Buscar empleos</li>
+                            <li>Programa de pasantías</li>
+                            <li>Genera tu CV automáticamente</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6>Para Empresas</h6>
+                        <ul class="list-unstyled small">
+                            <li>Publicar vacantes</li>
+                            <li>Planes y precios</li>
+                            <li>Buscar candidatos</li>
+                        </ul>
+                    </div>
+                }
+                <div class="col-md-3 mb-3">
+                    <h6>Contacto</h6>
+                    <ul class="list-unstyled small">
+                        <li><a href="mailto:hola@chambeajobs.com">hola@chambeajobs.com</a></li>
+                        <li><a href="tel:+50582912656">+505 8291 2656</a></li>
+                        <li>Managua, Nicaragua</li>
+                        <li>Términos y condiciones</li>
+                        <li>Política de privacidad</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center small pt-3 border-top border-secondary-subtle">
+                &copy; @DateTime.Now.Year ChambeaJobs. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- ---------- Modal de Login (reemplaza la navegación a /Account/Login) ---------- -->
+    <div class="modal fade" id="modalLogin" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:var(--radius-lg); border:none; overflow:hidden;">
+                <div class="modal-header" style="background:var(--color-primary-900); border:none; padding:24px 24px 16px;">
+                    <h5 class="modal-title fw-bold" style="color:white;">Inicia sesión para encontrar tu próximo empleo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" style="background:var(--color-primary-900); padding:8px 24px 28px;">
+                    <hr style="border-color:rgba(255,255,255,0.15); margin-top:0;" />
+                    <p class="small mb-3" style="color:rgba(255,255,255,0.8);">
+                        ¿Todavía no tienes una cuenta?
+                        <a href="#" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('modalLogin'))?.hide(); new bootstrap.Modal(document.getElementById('modalCrearCuenta')).show();" style="color:var(--color-accent-300); font-weight:600;">Regístrate aquí</a>
+                    </p>
+
+                    <form id="formModalLogin">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ReturnUrl" id="inputReturnUrlModalLogin" value="" />
+
+                        <div id="alertaModalLogin" class="alert alert-danger py-2 small mb-3" style="display:none;"></div>
+
+                        <div class="mb-3">
+                            <input type="email" name="Correo" class="form-control" placeholder="Correo" required />
+                        </div>
+                        <div class="mb-2">
+                            <input type="password" name="Password" class="form-control" placeholder="Contraseña" required />
+                        </div>
+                        <div class="mb-3 text-end">
+                            <a asp-controller="Account" asp-action="RecuperarPassword" class="small" style="color:var(--color-accent-300);">He olvidado mi contraseña</a>
+                        </div>
+
+                        @if (captchaDisponibleGlobal)
+                        {
+                            <div class="mb-3 d-flex justify-content-center">
+                                <div class="g-recaptcha" data-sitekey="@captchaSiteKeyGlobal"></div>
+                            </div>
+                        }
+
+                        <button type="submit" id="btnEnviarModalLogin" class="btn w-100 fw-bold" style="background:var(--color-accent-500); color:white; height:46px;">
+                            Iniciar sesión
+                        </button>
+                    </form>
+
+                    <!-- Paso 2 (solo si la cuenta tiene verificación en dos pasos activada) —
+                         oculto hasta que el primer paso (correo+contraseña) responda "requiere2FA". -->
+                    <form id="formModalLogin2FA" style="display:none;">
+                        @Html.AntiForgeryToken()
+                        <p class="small mb-3" style="color:rgba(255,255,255,0.8);">
+                            <i class="fa-solid fa-shield-halved me-1"></i>
+                            Ingresa el código de 6 dígitos de tu aplicación autenticadora.
+                        </p>
+                        <div id="alertaModalLogin2FA" class="alert alert-danger py-2 small mb-3" style="display:none;"></div>
+                        <div class="mb-3">
+                            <input type="text" name="codigo" id="inputCodigo2FA" class="form-control text-center" placeholder="000000"
+                                   maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="letter-spacing:6px; font-size:1.3rem;" required />
+                        </div>
+                        <button type="submit" id="btnEnviarModalLogin2FA" class="btn w-100 fw-bold" style="background:var(--color-accent-500); color:white; height:46px;">
+                            Verificar
+                        </button>
+                    </form>
+
+                    <div class="d-flex align-items-center gap-2 my-3">
+                        <hr class="flex-grow-1" style="border-color:rgba(255,255,255,0.15);" />
+                        <span class="small" style="color:rgba(255,255,255,0.6);">O puedes iniciar sesión con</span>
+                        <hr class="flex-grow-1" style="border-color:rgba(255,255,255,0.15);" />
+                    </div>
+
+                    @if (googleDisponibleGlobal)
+                    {
+                        <a asp-controller="Account" asp-action="LoginGoogle" class="btn w-100 bg-white d-flex align-items-center justify-content-center gap-2" style="height:46px;">
+                            <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                            </svg> Inicia sesión con Google
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn w-100 bg-white d-flex align-items-center justify-content-center gap-2" style="height:46px;"
+                                onclick="alert('Inicio de sesión con Google estará disponible muy pronto.');">
+                            <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                            </svg> Inicia sesión con Google
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ---------- Modal de Registro (selector Candidato / Empresa) ---------- -->
+    <div class="modal fade" id="modalCrearCuenta" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border-radius:var(--radius-lg); border:none;">
+                <div class="modal-header" style="border-bottom:1px solid var(--color-mist); padding:24px 24px 16px;">
+                    <h5 class="modal-title fw-bold text-center w-100">¿Cómo quieres usar ChambeaJobs?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" style="padding:24px 32px 32px;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="#" class="text-decoration-none" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('modalCrearCuenta'))?.hide(); new bootstrap.Modal(document.getElementById('modalRegistroCandidato')).show();">
+                                <div class="cj-card cj-card-interactive text-center h-100">
+                                    <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                                         style="width:56px; height:56px; border-radius:var(--radius-md); background:var(--color-primary-100);">
+                                        <i class="fa-solid fa-user-tie" style="color: var(--color-primary-700); font-size:1.4rem;"></i>
+                                    </div>
+                                    <h5 class="mb-2" style="color: var(--color-text);">Busco empleo</h5>
+                                    <p class="small mb-0" style="color: var(--color-text-secondary);">
+                                        Crea tu perfil, sube tu CV y postúlate a vacantes en un solo lugar.
+                                    </p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="#" class="text-decoration-none" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('modalCrearCuenta'))?.hide(); new bootstrap.Modal(document.getElementById('modalRegistroEmpresa')).show();">
+                                <div class="cj-card cj-card-interactive text-center h-100">
+                                    <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                                         style="width:56px; height:56px; border-radius:var(--radius-md); background:var(--color-accent-100);">
+                                        <i class="fa-solid fa-building" style="color: var(--color-accent-500); font-size:1.4rem;"></i>
+                                    </div>
+                                    <h5 class="mb-2" style="color: var(--color-text);">Quiero publicar vacantes</h5>
+                                    <p class="small mb-0" style="color: var(--color-text-secondary);">
+                                        Publica ofertas de empleo y encuentra al candidato ideal.
+                                    </p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <p class="text-center small mt-4 mb-0">
+                        ¿Ya tienes cuenta?
+                        <a href="#" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('modalCrearCuenta'))?.hide(); new bootstrap.Modal(document.getElementById('modalLogin')).show();" style="color:var(--color-primary-700); font-weight:600;">Iniciar sesión</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ---------- Modal de Registro: Candidato ---------- -->
+    <div class="modal fade" id="modalRegistroCandidato" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius:var(--radius-lg); border:none;">
+                <div class="modal-header" style="border-bottom:1px solid var(--color-mist);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; border-radius:var(--radius-md); background:var(--color-accent-100);">
+                            <i class="fa-solid fa-user-plus" style="color:var(--color-accent-500);"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0">Crea tu cuenta de candidato</h5>
+                            <p class="small text-secondary mb-0">Es gratis y toma menos de 2 minutos.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="alertaModalRegistroCandidato" class="alert alert-danger py-2 small mb-3" style="display:none;"></div>
+
+                    <form id="formModalRegistroCandidato">
+                        @Html.AntiForgeryToken()
+
+                        @if (googleDisponibleGlobal)
+                        {
+                            <a asp-controller="Account" asp-action="LoginGoogle" class="btn btn-outline-secondary w-100 mb-2 d-flex align-items-center justify-content-center gap-2">
+                                <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                            </svg> Continuar con Google
+                            </a>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <hr class="flex-grow-1" />
+                                <span class="small text-secondary">o regístrate con tu correo</span>
+                                <hr class="flex-grow-1" />
+                            </div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombres</label>
+                                <input name="Nombres" class="form-control" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Apellidos</label>
+                                <input name="Apellidos" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correo electrónico</label>
+                            <input name="Correo" type="email" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input name="Telefono" class="form-control" placeholder="8888-8888" maxlength="9" inputmode="numeric" required />
+                            <div class="form-text">8 dígitos (número de Nicaragua). Ej: 8888-8888</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contraseña</label>
+                                <input name="Password" type="password" class="form-control" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirmar contraseña</label>
+                                <input name="ConfirmarPassword" type="password" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input name="AceptaTerminos" type="checkbox" value="true" class="form-check-input" id="chkTerminosCandidato" required />
+                            <label class="form-check-label small" for="chkTerminosCandidato">
+                                Acepto los <a asp-controller="Home" asp-action="Terminos" target="_blank">términos y condiciones</a>
+                                y la <a asp-controller="Home" asp-action="Privacidad" target="_blank">política de privacidad</a> de ChambeaJobs.
+                            </label>
+                        </div>
+                        @if (captchaDisponibleGlobal)
+                        {
+                            <div class="mb-3 d-flex justify-content-center">
+                                <div class="g-recaptcha" data-sitekey="@captchaSiteKeyGlobal"></div>
+                            </div>
+                        }
+                        <button type="submit" id="btnEnviarRegistroCandidato" class="btn cj-btn-primary w-100 mb-3">Crear cuenta</button>
+                        <p class="text-center small mb-0">
+                            ¿Ya tienes cuenta?
+                            <a href="#" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('modalRegistroCandidato'))?.hide(); new bootstrap.Modal(document.getElementById('modalLogin')).show();">Iniciar sesión</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ---------- Modal de Registro: Empresa ---------- -->
+    <div class="modal fade" id="modalRegistroEmpresa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content" style="border-radius:var(--radius-lg); border:none;">
+                <div class="modal-header" style="border-bottom:1px solid var(--color-mist);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-inline-flex align-items-center justify-content-center" style="width:40px; height:40px; border-radius:var(--radius-md); background:var(--color-primary-100);">
+                            <i class="fa-solid fa-building" style="color:var(--color-primary-700);"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0">Crea tu cuenta de empresa</h5>
+                            <p class="small text-secondary mb-0">Publica vacantes y encuentra el talento que buscas.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="alertaModalRegistroEmpresa" class="alert alert-danger py-2 small mb-3" style="display:none;"></div>
+
+                    <form id="formModalRegistroEmpresa">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre de la empresa</label>
+                            <input name="NombreEmpresa" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">RUC / Identificación fiscal</label>
+                            <input name="RUC" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correo corporativo</label>
+                            <input name="Correo" type="email" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input name="Telefono" class="form-control" placeholder="8888-8888" maxlength="9" inputmode="numeric" required />
+                            <div class="form-text">8 dígitos (número de Nicaragua). Ej: 8888-8888</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ubicación</label>
+                            <select name="UbicacionId" class="form-select" required>
+                                <option value="">Selecciona una ubicación...</option>
+                                @foreach (var ubicacion in ubicacionesGlobal)
+                                {
+                                    <option value="@ubicacion.Id">@ubicacion.NombreCompleto</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="alert alert-success small d-flex align-items-center gap-2 mb-3">
+                            <i class="fa-solid fa-gift"></i>
+                            <span><strong>Tu primer mes es gratis</strong>, sin importar el plan que elijas. Se cobra a partir del segundo mes.</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Elige tu plan (aplica desde el segundo mes)</label>
+                            <div class="row g-2">
+                                @foreach (var plan in planesGlobal)
+                                {
+                                    <div class="col-md-6">
+                                        <label class="cj-card p-3 d-block" style="cursor:pointer; border-width:2px;">
+                                            <input type="radio" name="PlanSuscripcionId" value="@plan.Id" class="form-check-input me-2" required />
+                                            <span class="fw-semibold">@plan.Nombre</span>
+                                            <div class="fs-5 fw-bold mt-1" style="color:var(--color-accent-500);">
+                                                $@plan.Precio.ToString("0")<span class="small fw-normal text-secondary">/mes</span>
+                                            </div>
+                                            <div class="small text-secondary">
+                                                @(plan.VacantesIncluidas.HasValue ? $"{plan.VacantesIncluidas} vacantes activas" : "Vacantes ilimitadas")
+                                            </div>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contraseña</label>
+                                <input name="Password" type="password" class="form-control" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirmar contraseña</label>
+                                <input name="ConfirmarPassword" type="password" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input name="AceptaTerminos" type="checkbox" value="true" class="form-check-input" id="chkTerminosEmpresa" required />
+                            <label class="form-check-label small" for="chkTerminosEmpresa">
+                                Acepto los <a asp-controller="Home" asp-action="Terminos" target="_blank">términos y condiciones</a>
+                                y la <a asp-controller="Home" asp-action="Privacidad" target="_blank">política de privacidad</a> de ChambeaJobs.
+                            </label>
+                        </div>
+                        @if (captchaDisponibleGlobal)
+                        {
+                            <div class="mb-3 d-flex justify-content-center">
+                                <div class="g-recaptcha" data-sitekey="@captchaSiteKeyGlobal"></div>
+                            </div>
+                        }
+                        <button type="submit" id="btnEnviarRegistroEmpresa" class="btn cj-btn-primary w-100 mb-3">Crear cuenta de empresa</button>
+                        <p class="text-center small mb-0">
+                            ¿Ya tienes cuenta?
+                            <a href="#" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('modalRegistroEmpresa'))?.hide(); new bootstrap.Modal(document.getElementById('modalLogin')).show();">Iniciar sesión</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Envía el login del modal por fetch, sin navegar a otra página —
+        // si falla, muestra el error dentro del mismo modal; si funciona,
+        // redirige al panel correspondiente según el rol.
+        (function () {
+            const formulario = document.getElementById('formModalLogin');
+            if (!formulario) return;
+
+            formulario.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const boton = document.getElementById('btnEnviarModalLogin');
+                const alerta = document.getElementById('alertaModalLogin');
+                alerta.style.display = 'none';
+                boton.disabled = true;
+                boton.textContent = 'Iniciando sesión...';
+
+                try {
+                    const datos = new FormData(formulario);
+                    const respuesta = await fetch('@Url.Action("Login", "Account")', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: datos,
+                    });
+                    const resultado = await respuesta.json();
+
+                    if (respuesta.ok && resultado.exito) {
+                        window.location.href = resultado.redirectUrl;
+                    } else if (resultado.requiere2FA) {
+                        // La contraseña era correcta, pero esta cuenta pide
+                        // el segundo paso — se cambia el formulario visible
+                        // dentro del MISMO modal, sin cerrarlo ni navegar.
+                        formulario.style.display = 'none';
+                        document.getElementById('formModalLogin2FA').style.display = 'block';
+                        document.getElementById('inputCodigo2FA').focus();
+                    } else {
+                        alerta.textContent = resultado.mensaje || 'No se pudo iniciar sesión.';
+                        alerta.style.display = 'block';
+                    }
+                } catch (err) {
+                    alerta.textContent = 'No se pudo conectar. Intenta de nuevo.';
+                    alerta.style.display = 'block';
+                } finally {
+                    boton.disabled = false;
+                    boton.textContent = 'Iniciar sesión';
+                }
+            });
+        })();
+
+        // ---------- Paso 2 del login: código de verificación en dos pasos ----------
+        (function () {
+            const formulario = document.getElementById('formModalLogin2FA');
+            if (!formulario) return;
+
+            formulario.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const boton = document.getElementById('btnEnviarModalLogin2FA');
+                const alerta = document.getElementById('alertaModalLogin2FA');
+                alerta.style.display = 'none';
+                boton.disabled = true;
+                boton.textContent = 'Verificando...';
+
+                try {
+                    const datos = new FormData(formulario);
+                    const respuesta = await fetch('@Url.Action("VerificarCodigo2FA", "Account")', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: datos,
+                    });
+                    const resultado = await respuesta.json();
+
+                    if (respuesta.ok && resultado.exito) {
+                        window.location.href = resultado.redirectUrl;
+                    } else {
+                        alerta.textContent = resultado.mensaje || 'Código incorrecto.';
+                        alerta.style.display = 'block';
+                    }
+                } catch (err) {
+                    alerta.textContent = 'No se pudo conectar. Intenta de nuevo.';
+                    alerta.style.display = 'block';
+                } finally {
+                    boton.disabled = false;
+                    boton.textContent = 'Verificar';
+                }
+            });
+        })();
+
+        // ---------- Envío genérico por AJAX para los modales de registro ----------
+        // Mismo patrón que el login: se envía el formulario por fetch, y si
+        // falla se muestra el mensaje dentro del propio modal (sin navegar a
+        // ninguna página) — si funciona, redirige al panel correspondiente.
+        function conectarFormularioModal(idFormulario, idAlerta, idBoton, url, textoBotonNormal, textoBotonEnviando) {
+            const formulario = document.getElementById(idFormulario);
+            if (!formulario) return;
+
+            formulario.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const boton = document.getElementById(idBoton);
+                const alerta = document.getElementById(idAlerta);
+                alerta.style.display = 'none';
+                boton.disabled = true;
+                boton.textContent = textoBotonEnviando;
+
+                try {
+                    const datos = new FormData(formulario);
+                    const respuesta = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: datos,
+                    });
+                    const resultado = await respuesta.json();
+
+                    if (respuesta.ok && resultado.exito) {
+                        window.location.href = resultado.redirectUrl;
+                        return;
+                    }
+
+                    const mensajes = resultado.mensajes || [resultado.mensaje || 'No se pudo completar el registro.'];
+                    alerta.innerHTML = mensajes.map(m => `<div>${m}</div>`).join('');
+                    alerta.style.display = 'block';
+                } catch (err) {
+                    alerta.textContent = 'No se pudo conectar. Intenta de nuevo.';
+                    alerta.style.display = 'block';
+                } finally {
+                    boton.disabled = false;
+                    boton.textContent = textoBotonNormal;
+                }
+            });
+        }
+
+        conectarFormularioModal(
+            'formModalRegistroCandidato', 'alertaModalRegistroCandidato', 'btnEnviarRegistroCandidato',
+            '@Url.Action("RegistroCandidato", "Account")', 'Crear cuenta', 'Creando cuenta...'
+        );
+        conectarFormularioModal(
+            'formModalRegistroEmpresa', 'alertaModalRegistroEmpresa', 'btnEnviarRegistroEmpresa',
+            '@Url.Action("RegistroEmpresa", "Account")', 'Crear cuenta de empresa', 'Creando cuenta...'
+        );
+
+        // Si el usuario cierra el modal a mitad del paso 2 (código de
+        // verificación), la próxima vez que lo abra debe volver a ver el
+        // paso 1 (correo+contraseña), no quedarse en el paso 2 a medias.
+        (function () {
+            const modalLoginEl = document.getElementById('modalLogin');
+            if (!modalLoginEl) return;
+            modalLoginEl.addEventListener('hidden.bs.modal', function () {
+                const paso1 = document.getElementById('formModalLogin');
+                const paso2 = document.getElementById('formModalLogin2FA');
+                if (paso1) paso1.style.display = 'block';
+                if (paso2) { paso2.style.display = 'none'; paso2.reset(); }
+            });
+        })();
+
+
+        // Antes, cuando el sistema necesitaba mandar a alguien sin sesión a
+        // iniciar sesión (ej. entrar a "Centro de Soporte" sin estar
+        // logueado), lo mandaba a una PÁGINA de login aparte — que ya no
+        // existe. Ahora esa redirección llega aquí con "?abrirLogin=true"
+        // (y opcionalmente "&returnUrl=..."), y esta página abre el modal
+        // sola, sin importar en qué parte del sitio haya caído.
+        (function () {
+            const parametros = new URLSearchParams(window.location.search);
+            const debeAbrir = parametros.get('abrirLogin') === 'true';
+            const errorLogin = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorLogin"] as string));
+
+            if (debeAbrir || errorLogin) {
+                const returnUrl = parametros.get('returnUrl');
+                const inputReturnUrl = document.getElementById('inputReturnUrlModalLogin');
+                if (returnUrl && inputReturnUrl) {
+                    inputReturnUrl.value = returnUrl;
+                }
+                if (errorLogin) {
+                    const alerta = document.getElementById('alertaModalLogin');
+                    if (alerta) {
+                        alerta.textContent = errorLogin;
+                        alerta.style.display = 'block';
+                    }
+                }
+                const modalLogin = new bootstrap.Modal(document.getElementById('modalLogin'));
+                modalLogin.show();
+
+                // Limpia el query string para que un refresh no vuelva a abrirlo.
+                const url = new URL(window.location.href);
+                url.searchParams.delete('abrirLogin');
+                url.searchParams.delete('returnUrl');
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+        })();
+
+        // Mismo mecanismo, para el modal de "Crear cuenta" — por si algún
+        // enlace viejo o marcador todavía apunta a la antigua página de
+        // selección (RegistroSelector), que ahora solo redirige aquí.
+        (function () {
+            const parametros = new URLSearchParams(window.location.search);
+            if (parametros.get('abrirRegistro') === 'true') {
+                new bootstrap.Modal(document.getElementById('modalCrearCuenta')).show();
+
+                const url = new URL(window.location.href);
+                url.searchParams.delete('abrirRegistro');
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+            if (parametros.get('abrirRegistroCandidato') === 'true') {
+                new bootstrap.Modal(document.getElementById('modalRegistroCandidato')).show();
+                const url = new URL(window.location.href);
+                url.searchParams.delete('abrirRegistroCandidato');
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+            if (parametros.get('abrirRegistroEmpresa') === 'true') {
+                new bootstrap.Modal(document.getElementById('modalRegistroEmpresa')).show();
+                const url = new URL(window.location.href);
+                url.searchParams.delete('abrirRegistroEmpresa');
+                history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+        })();
+    </script>
+
+    <partial name="_ChatbotWidget" />
+</body>
+</html>

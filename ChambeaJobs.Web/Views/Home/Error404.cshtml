@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Página no encontrada";
+}
+
+<div class="container py-5 text-center d-flex flex-column align-items-center justify-content-center" style="min-height:70vh;">
+    <div class="d-inline-flex align-items-center justify-content-center mb-4"
+         style="width:88px; height:88px; border-radius:50%; background:var(--color-accent-100);">
+        <i class="fa-solid fa-compass fa-2x" style="color: var(--color-accent-500);"></i>
+    </div>
+    <h1 class="display-5 fw-bold mb-2">404</h1>
+    <p class="text-secondary mb-4">La página que buscas no existe o fue movida.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn cj-btn-primary">Volver al inicio</a>
+</div>

@@ -1,0 +1,143 @@
+@model TicketSoporteDto
+@{
+    ViewData["Title"] = "Chat de soporte";
+}
+
+<div class="container py-5" style="max-width:760px;">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px; border-radius:var(--radius-md); background:var(--color-primary-100);">
+                <i class="fa-solid fa-headset" style="color:var(--color-primary-700);"></i>
+            </div>
+            <div>
+                <h2 class="mb-0">@Model.Asunto</h2>
+                <span class="small text-secondary">@Model.NombreContacto &middot; @Model.CorreoContacto</span>
+            </div>
+        </div>
+        <span class="cj-badge @(Model.Estado == "Abierto" ? "cj-badge-success" : "cj-badge-info")">@Model.Estado</span>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success mt-3">@TempData["Exito"]</div>
+    }
+
+    <div class="cj-card p-0 overflow-hidden mt-4">
+        <div id="listaMensajes" class="d-flex flex-column gap-2 p-3" style="max-height:55vh; overflow-y:auto; background:var(--color-canvas);">
+            @foreach (var m in Model.Mensajes)
+            {
+                <div class="d-flex @(m.EsAdmin ? "justify-content-end" : "justify-content-start")">
+                    <div style="max-width:75%; border-radius:var(--radius-md); padding:10px 14px;
+                                background:@(m.EsAdmin ? "var(--color-primary-700)" : "var(--color-white)");
+                                color:@(m.EsAdmin ? "white" : "var(--color-ink)");
+                                border:@(m.EsAdmin ? "none" : "1px solid var(--color-mist)");">
+                        <div class="small fw-semibold mb-1" style="opacity:0.75;">@(m.EsAdmin ? "Tú (Soporte)" : Model.NombreContacto)</div>
+                        <div style="white-space:pre-line;">@m.Mensaje</div>
+                        <div class="small mt-1" style="opacity:0.65; font-size:0.7rem;">@m.FechaEnvio.ToLocalTime().ToString("dd/MM HH:mm")</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (Model.Estado == "Abierto")
+        {
+            <form id="formEnviarMensaje" class="d-flex gap-2 p-3 border-top">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ticketId" value="@Model.Id" />
+                <input type="text" name="mensaje" id="inputMensaje" class="form-control" placeholder="Escribe tu respuesta..." autocomplete="off" required />
+                <button type="submit" class="btn cj-btn-primary flex-shrink-0"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+            <div class="p-3 border-top text-end">
+                <form asp-controller="Admin" asp-action="CerrarTicketSoporte" method="post" onsubmit="return confirm('¿Marcar este ticket como resuelto?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ticketId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-sm cj-btn-outline">
+                        <i class="fa-solid fa-circle-check me-1"></i> Marcar como resuelto
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="p-3 border-top text-center small text-secondary">Este ticket ya está resuelto.</div>
+        }
+    </div>
+
+    <a asp-controller="Admin" asp-action="Soporte" class="d-inline-block mt-3 small">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver a todos los tickets
+    </a>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <script>
+        const ticketId = @Model.Id;
+        const nombreContacto = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.NombreContacto));
+        const listaMensajes = document.getElementById('listaMensajes');
+
+        function agregarMensaje(m) {
+            const fila = document.createElement('div');
+            fila.className = 'd-flex ' + (m.esAdmin ? 'justify-content-end' : 'justify-content-start');
+            const fecha = new Date(m.fechaEnvio);
+            const horaTexto = fecha.toLocaleString('es-NI', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            fila.innerHTML = `
+                <div style="max-width:75%; border-radius:var(--radius-md); padding:10px 14px;
+                            background:${m.esAdmin ? 'var(--color-primary-700)' : 'var(--color-white)'};
+                            color:${m.esAdmin ? 'white' : 'var(--color-ink)'};
+                            border:${m.esAdmin ? 'none' : '1px solid var(--color-mist)'};">
+                    <div class="small fw-semibold mb-1" style="opacity:0.75;">${m.esAdmin ? 'Tú (Soporte)' : nombreContacto}</div>
+                    <div style="white-space:pre-line;"></div>
+                    <div class="small mt-1" style="opacity:0.65; font-size:0.7rem;">${horaTexto}</div>
+                </div>`;
+            fila.querySelector('div div[style*="pre-line"]').textContent = m.mensaje;
+            listaMensajes.appendChild(fila);
+            listaMensajes.scrollTop = listaMensajes.scrollHeight;
+        }
+
+        listaMensajes.scrollTop = listaMensajes.scrollHeight;
+
+        const conexion = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/soporte-chat')
+            .withAutomaticReconnect()
+            .build();
+
+        conexion.on('NuevoMensaje', function (mensaje) {
+            if (!mensaje.esAdmin) {
+                agregarMensaje(mensaje);
+            }
+        });
+
+        conexion.start()
+            .then(() => conexion.invoke('UnirseAlTicket', ticketId))
+            .catch(err => console.error('No se pudo conectar el chat en tiempo real:', err));
+
+        const formulario = document.getElementById('formEnviarMensaje');
+        if (formulario) {
+            formulario.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const input = document.getElementById('inputMensaje');
+                const texto = input.value.trim();
+                if (!texto) return;
+
+                const token = formulario.querySelector('input[name="__RequestVerificationToken"]').value;
+                const datos = new FormData();
+                datos.append('ticketId', ticketId);
+                datos.append('mensaje', texto);
+
+                const respuesta = await fetch('/Admin/EnviarMensajeSoporte', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    body: datos
+                });
+
+                if (respuesta.ok) {
+                    const mensajeEnviado = await respuesta.json();
+                    agregarMensaje(mensajeEnviado);
+                    input.value = '';
+                } else {
+                    alert('No se pudo enviar el mensaje. Intenta de nuevo.');
+                }
+            });
+        }
+    </script>
+}

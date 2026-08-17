@@ -1,0 +1,185 @@
+@model FinanzasDashboardDto
+@{
+    ViewData["Title"] = "Contabilidad y Finanzas";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="mb-1" style="font-size:1.4rem;">Contabilidad y Finanzas</h2>
+            <p class="text-secondary small mb-0">Control financiero interno — se alimenta automáticamente de los pagos aprobados.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Ingresos" class="btn cj-btn-outline btn-sm">Ingresos</a>
+            <a asp-action="Gastos" class="btn cj-btn-outline btn-sm">Gastos</a>
+            <a asp-action="EstadoResultados" class="btn cj-btn-outline btn-sm">Estado de resultados</a>
+            <button type="button" class="btn cj-btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalExportarFinanzasPdf">
+                <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalExportarFinanzasPdf" tabindex="-1">
+        <div class="modal-dialog">
+            <form asp-action="ExportarPdf" method="post" class="modal-content">
+                @Html.AntiForgeryToken()
+                @{ var opciones = new FinanzasExportOpcionesDto(); }
+                <div class="modal-header">
+                    <h5 class="modal-title">Exportar reporte financiero a PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small">Desde</label>
+                            <input asp-for="@opciones.Desde" type="date" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Hasta</label>
+                            <input asp-for="@opciones.Hasta" type="date" class="form-control" />
+                        </div>
+                    </div>
+                    <p class="text-secondary small">Elige qué secciones incluir:</p>
+                    <div class="form-check mb-2">
+                        <input asp-for="@opciones.IncluirIndicadores" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@opciones.IncluirIndicadores">Indicadores generales</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="@opciones.IncluirEstadoResultados" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@opciones.IncluirEstadoResultados">Estado de resultados</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="@opciones.IncluirBalanceGeneral" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@opciones.IncluirBalanceGeneral">Balance general</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="@opciones.IncluirIngresos" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@opciones.IncluirIngresos">Detalle de ingresos</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="@opciones.IncluirGastos" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@opciones.IncluirGastos">Detalle de gastos</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="@opciones.IncluirAuditoria" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@opciones.IncluirAuditoria">Auditoría (últimos movimientos)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn cj-btn-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn cj-btn-primary"><i class="fa-solid fa-download"></i> Descargar PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:32px; height:32px; border-radius:var(--radius-sm); background:#DEF4E9;">
+                    <i class="fa-solid fa-sun" style="color:var(--color-success); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem;">$@Model.IngresosDia.ToString("0.00")</span>
+                    <span class="small text-secondary">Ingresos de hoy</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:32px; height:32px; border-radius:var(--radius-sm); background:#DEF4E9;">
+                    <i class="fa-solid fa-calendar-check" style="color:var(--color-success); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem;">$@Model.IngresosMes.ToString("0.00")</span>
+                    <span class="small text-secondary">Ingresos del mes</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:32px; height:32px; border-radius:var(--radius-sm); background:var(--color-accent-100);">
+                    <i class="fa-solid fa-receipt" style="color:var(--color-accent-500); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem;">$@Model.GastosMes.ToString("0.00")</span>
+                    <span class="small text-secondary">Gastos del mes</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card d-flex align-items-center gap-2 py-2 px-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:32px; height:32px; border-radius:var(--radius-sm); background:var(--color-primary-100);">
+                    <i class="fa-solid fa-scale-balanced" style="color:var(--color-primary-700); font-size:0.85rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold" style="font-size:1.1rem;">$@Model.UtilidadEstimadaMes.ToString("0.00")</span>
+                    <span class="small text-secondary">Resultado del mes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold" style="font-size:1.1rem;">$@Model.IngresosAnio.ToString("0.00")</div>
+                <div class="small text-secondary">Ingresos del año</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold" style="font-size:1.1rem;">$@Model.GastosAnio.ToString("0.00")</div>
+                <div class="small text-secondary">Gastos del año</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold" style="font-size:1.1rem;">$@Model.UtilidadEstimadaAnio.ToString("0.00")</div>
+                <div class="small text-secondary">Resultado del año</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold" style="font-size:1.1rem;">$@Model.CuentasPorCobrarEstimadas.ToString("0.00")</div>
+                <div class="small text-secondary">Cuentas por cobrar</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-4">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold text-success">@Model.PagosAprobados</div>
+                <div class="small text-secondary">Pagos aprobados</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold text-warning">@Model.PagosPendientes</div>
+                <div class="small text-secondary">Pagos pendientes</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold text-danger">@Model.PagosRechazados</div>
+                <div class="small text-secondary">Pagos rechazados</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2">
+        <div class="col-md-6">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold" style="font-size:1.1rem;">@Model.EmpresasClientes</div>
+                <div class="small text-secondary">Empresas clientes (histórico)</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="cj-card text-center py-2">
+                <div class="fw-bold" style="font-size:1.1rem;">@Model.RenovacionesDelMes</div>
+                <div class="small text-secondary">Renovaciones este mes</div>
+            </div>
+        </div>
+    </div>
+</div>

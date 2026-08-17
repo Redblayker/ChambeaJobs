@@ -1,0 +1,71 @@
+@model List<CategoriaFinancieraDto>
+@{
+    ViewData["Title"] = "Categorías - Finanzas";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" style="font-size:1.3rem;">Categorías financieras</h2>
+        <a asp-action="Dashboard" class="btn cj-btn-outline btn-sm">← Dashboard</a>
+    </div>
+
+    @if (TempData["Exito"] != null) { <div class="alert alert-success">@TempData["Exito"]</div> }
+    @if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+
+    @if (User.IsInRole("SuperAdministrador") || User.IsInRole("AdministradorFinanciero"))
+    {
+        <div class="cj-card mb-3">
+            <h6 class="mb-2">Nueva categoría</h6>
+            <form asp-action="NuevaCategoria" method="post" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-3">
+                    <select name="Tipo" class="form-select" required>
+                        <option value="Ingreso">Ingreso</option>
+                        <option value="Gasto">Gasto</option>
+                        <option value="Activo">Activo</option>
+                        <option value="Pasivo">Pasivo</option>
+                        <option value="Patrimonio">Patrimonio</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input name="Nombre" class="form-control" placeholder="Nombre" required />
+                </div>
+                <div class="col-md-3">
+                    <input name="Descripcion" class="form-control" placeholder="Descripción (opcional)" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn cj-btn-primary w-100">Agregar</button>
+                </div>
+            </form>
+        </div>
+    }
+
+    <div class="cj-card p-0">
+        <table class="table table-hover mb-0 align-middle" style="font-size:0.85rem;">
+            <thead><tr><th>Tipo</th><th>Nombre</th><th>Descripción</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-secondary-subtle text-secondary">@c.Tipo</span></td>
+                        <td>@c.Nombre</td>
+                        <td class="text-secondary">@(c.Descripcion ?? "—")</td>
+                        <td>
+                            @if (c.Activa) { <span class="badge bg-success-subtle text-success">Activa</span> }
+                            else { <span class="badge bg-secondary-subtle text-secondary">Inactiva</span> }
+                        </td>
+                        <td>
+                            @if (User.IsInRole("SuperAdministrador") || User.IsInRole("AdministradorFinanciero"))
+                            {
+                                <form asp-action="AlternarCategoriaActiva" asp-route-id="@c.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm cj-btn-outline">@(c.Activa ? "Desactivar" : "Activar")</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

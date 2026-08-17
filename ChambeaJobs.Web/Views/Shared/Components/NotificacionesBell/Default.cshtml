@@ -1,0 +1,51 @@
+@model List<NotificacionDto>
+@{
+    var noLeidas = (int)ViewBag.NoLeidas;
+}
+
+<div class="dropdown">
+    <button class="btn btn-link position-relative text-decoration-none js-campana-notificaciones" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color:inherit;">
+        <i class="fa-solid fa-bell fs-5"></i>
+        <span class="js-contador-notificaciones position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem; @(noLeidas > 0 ? "" : "display:none;")">
+            @(noLeidas > 9 ? "9+" : noLeidas.ToString())
+        </span>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end p-0" style="width: 340px; max-height: 420px; overflow-y: auto;">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+            <span class="fw-semibold small">Notificaciones</span>
+            @if (noLeidas > 0)
+            {
+                <form asp-controller="Notificaciones" asp-action="MarcarTodasLeidas" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    <button type="submit" class="btn btn-link btn-sm p-0 small">Marcar todas leídas</button>
+                </form>
+            }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="px-3 py-4 text-center small text-secondary">No tienes notificaciones.</div>
+        }
+        else
+        {
+            @foreach (var n in Model)
+            {
+                <a asp-controller="Notificaciones" asp-action="Ir" asp-route-id="@n.Id"
+                   class="dropdown-item d-flex align-items-start gap-2 py-2 @(n.Leida ? "" : "bg-light")"
+                   style="white-space:normal;">
+                    <i class="fa-solid @n.Icono mt-1" style="color:var(--color-primary-700); width:16px;"></i>
+                    <div>
+                        <div class="small @(n.Leida ? "" : "fw-semibold")">@n.Mensaje</div>
+                        <div class="text-secondary" style="font-size:0.72rem;">@n.FechaCreacion.ToString("dd/MM HH:mm")</div>
+                    </div>
+                </a>
+            }
+        }
+
+        <div class="text-center border-top py-2">
+            <a asp-controller="Notificaciones" asp-action="Index" class="small">Ver todas</a>
+        </div>
+    </div>
+</div>

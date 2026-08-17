@@ -1,0 +1,46 @@
+@model BalanceGeneralDto
+@{
+    ViewData["Title"] = "Balance General - Finanzas";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0" style="font-size:1.3rem;">Balance General</h2>
+            <p class="text-secondary small mb-0">Estructura preparada — algunos rubros (equipos, obligaciones, capital) quedan en $0.00 hasta que existan movimientos de ese tipo.</p>
+        </div>
+        <a asp-action="Dashboard" class="btn cj-btn-outline btn-sm">← Dashboard</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="cj-card">
+                <h6 class="text-primary mb-2">ACTIVOS</h6>
+                <div class="d-flex justify-content-between small py-1"><span>Efectivo</span><span>$@Model.Efectivo.ToString("0.00")</span></div>
+                <div class="d-flex justify-content-between small py-1"><span>Cuentas por cobrar</span><span>$@Model.CuentasPorCobrar.ToString("0.00")</span></div>
+                <div class="d-flex justify-content-between small py-1 text-secondary"><span>Equipos</span><span>$0.00</span></div>
+                <div class="d-flex justify-content-between small py-1 text-secondary"><span>Otros activos</span><span>$0.00</span></div>
+                <hr />
+                <div class="d-flex justify-content-between fw-bold"><span>Total activos</span><span>$@Model.TotalActivos.ToString("0.00")</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-card">
+                <h6 class="text-danger mb-2">PASIVOS</h6>
+                <div class="d-flex justify-content-between small py-1"><span>Cuentas por pagar</span><span>$@Model.CuentasPorPagar.ToString("0.00")</span></div>
+                <div class="d-flex justify-content-between small py-1 text-secondary"><span>Obligaciones</span><span>$0.00</span></div>
+                <hr />
+                <div class="d-flex justify-content-between fw-bold"><span>Total pasivos</span><span>$@Model.TotalPasivos.ToString("0.00")</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-card">
+                <h6 class="text-success mb-2">PATRIMONIO</h6>
+                <div class="d-flex justify-content-between small py-1 text-secondary"><span>Capital</span><span>$0.00</span></div>
+                <div class="d-flex justify-content-between small py-1"><span>Resultados acumulados</span><span>$@Model.ResultadosAcumulados.ToString("0.00")</span></div>
+                <hr />
+                <div class="d-flex justify-content-between fw-bold"><span>Total patrimonio</span><span>$@Model.TotalPatrimonio.ToString("0.00")</span></div>
+            </div>
+        </div>
+    </div>
+</div>

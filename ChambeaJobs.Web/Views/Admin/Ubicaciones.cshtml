@@ -1,0 +1,64 @@
+@model List<UbicacionFormDto>
+@{
+    ViewData["Title"] = "Ubicaciones";
+}
+
+<div class="container py-5">
+    <h2 class="mb-1">Ubicaciones</h2>
+    <p class="text-secondary mb-4">@Model.Count @(Model.Count == 1 ? "ubicación disponible" : "ubicaciones disponibles").</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card mb-4">
+        <h5 class="mb-3"><i class="fa-solid fa-plus me-2" style="color:var(--color-accent-500);"></i>Nueva ubicación</h5>
+        <form asp-controller="Admin" asp-action="CrearUbicacion" method="post" class="row g-2">
+            <div class="col-md-5">
+                <input name="departamento" class="form-control" placeholder="Departamento" required />
+            </div>
+            <div class="col-md-5">
+                <input name="ciudad" class="form-control" placeholder="Ciudad" required />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn cj-btn-primary w-100">Agregar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="cj-card">
+        <div class="table-responsive">
+<table class="table align-middle">
+            <thead><tr><th>Departamento</th><th>Ciudad</th><th>Vacantes</th><th class="text-end">Acciones</th></tr></thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <form id="form-editar-ubi-@u.Id" asp-controller="Admin" asp-action="EditarUbicacion" method="post">
+                        <input type="hidden" name="id" value="@u.Id" />
+                    </form>
+                    <tr>
+                        <td><input form="form-editar-ubi-@u.Id" name="departamento" class="form-control form-control-sm" value="@u.Departamento" /></td>
+                        <td><input form="form-editar-ubi-@u.Id" name="ciudad" class="form-control form-control-sm" value="@u.Ciudad" /></td>
+                        <td><span class="cj-badge cj-badge-info">@u.VacantesAsociadas</span></td>
+                        <td class="text-end">
+                            <button form="form-editar-ubi-@u.Id" type="submit" class="btn btn-sm cj-btn-outline" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">Guardar</button>
+                            @if (u.VacantesAsociadas == 0)
+                            {
+                                <form asp-controller="Admin" asp-action="EliminarUbicacion" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta ubicación?');">
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger">Eliminar</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+    </div>
+</div>

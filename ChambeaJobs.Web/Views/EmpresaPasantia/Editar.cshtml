@@ -1,0 +1,119 @@
+@model PasantiaFormDto
+@{
+    ViewData["Title"] = "Editar pasantía";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:44px; height:44px; border-radius:var(--radius-md); background:#F3EBFB;">
+                    <i class="fa-solid fa-pen" style="color:#7C3AED;"></i>
+                </div>
+                <h2 class="mb-0">Editar pasantía</h2>
+            </div>
+
+            <div class="cj-card">
+                <form asp-controller="EmpresaPasantia" asp-action="Editar" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Titulo" class="form-label">Título de la pasantía</label>
+                        <input asp-for="Titulo" class="form-control" />
+                        <span asp-validation-for="Titulo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CategoriaId" class="form-label">Categoría / carrera</label>
+                            <select asp-for="CategoriaId" class="form-select">
+                                <option value="">Selecciona...</option>
+                                @foreach (var c in Model.CategoriasDisponibles)
+                                {
+                                    <option value="@c.Id" selected="@(c.Id == Model.CategoriaId)">@c.Nombre</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoriaId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="UbicacionId" class="form-label">Ubicación</label>
+                            <select asp-for="UbicacionId" class="form-select">
+                                <option value="">Selecciona...</option>
+                                @foreach (var u in Model.UbicacionesDisponibles)
+                                {
+                                    <option value="@u.Id" selected="@(u.Id == Model.UbicacionId)">@u.NombreCompleto</option>
+                                }
+                            </select>
+                            <span asp-validation-for="UbicacionId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Modalidad" class="form-label">Modalidad</label>
+                            <select asp-for="Modalidad" class="form-select">
+                                <option value="">Selecciona...</option>
+                                <option value="Presencial" selected="@(Model.Modalidad == "Presencial")">Presencial</option>
+                                <option value="Remoto" selected="@(Model.Modalidad == "Remoto")">Remoto</option>
+                                <option value="Híbrido" selected="@(Model.Modalidad == "Híbrido")">Híbrido</option>
+                            </select>
+                            <span asp-validation-for="Modalidad" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DuracionMeses" class="form-label">Duración (meses)</label>
+                            <input asp-for="DuracionMeses" type="number" min="1" max="24" class="form-control" />
+                            <span asp-validation-for="DuracionMeses" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Descripcion" class="form-label">Descripción</label>
+                        <textarea asp-for="Descripcion" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Requisitos" class="form-label">Requisitos</label>
+                        <textarea asp-for="Requisitos" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="cj-card mb-3" style="background:var(--color-mist-soft);">
+                        <div class="form-check mb-2">
+                            <input asp-for="EsRemunerada" class="form-check-input" id="check-remunerada" />
+                            <label asp-for="EsRemunerada" class="form-check-label">Es una pasantía remunerada</label>
+                        </div>
+                        <div id="campo-monto">
+                            <label asp-for="MontoRemuneracion" class="form-label small">Monto mensual (C$)</label>
+                            <input asp-for="MontoRemuneracion" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="MontoRemuneracion" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="FechaCierre" class="form-label">Fecha de cierre</label>
+                        <input asp-for="FechaCierre" type="date" class="form-control" value="@Model.FechaCierre.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="FechaCierre" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn w-100" style="background:#7C3AED; color:white;">
+                        Guardar cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const checkRemunerada = document.getElementById('check-remunerada');
+        const campoMonto = document.getElementById('campo-monto');
+        function actualizarCampoMonto() {
+            campoMonto.style.display = checkRemunerada.checked ? 'block' : 'none';
+        }
+        checkRemunerada.addEventListener('change', actualizarCampoMonto);
+        actualizarCampoMonto();
+    </script>
+}

@@ -1,0 +1,209 @@
+@model CandidatoPerfilDto
+@{
+    ViewData["Title"] = "Mi perfil";
+}
+
+<div class="container py-4">
+    <div class="row g-2 mb-3">
+        <div class="col-md-4">
+            <div class="cj-estado-tarjeta @(Model.PorcentajeCompletitud >= 70 ? "bien" : "alerta") py-2">
+                <div>
+                    <div class="cj-estado-titulo">Perfil</div>
+                    <div class="cj-estado-sub">@Model.PorcentajeCompletitud% completo</div>
+                </div>
+                <div class="cj-estado-carita">@Html.Raw(Model.PorcentajeCompletitud >= 70 ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-estado-tarjeta @(!string.IsNullOrEmpty(Model.VideoCvUrl) ? "bien" : "alerta") py-2">
+                <div>
+                    <div class="cj-estado-titulo">Video CV</div>
+                    <div class="cj-estado-sub">@(!string.IsNullOrEmpty(Model.VideoCvUrl) ? "Ya lo subiste" : "Sin subir")</div>
+                </div>
+                <div class="cj-estado-carita">@Html.Raw(!string.IsNullOrEmpty(Model.VideoCvUrl) ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="cj-estado-tarjeta @(!string.IsNullOrEmpty(Model.CvUrl) ? "bien" : "alerta") py-2">
+                <div>
+                    <div class="cj-estado-titulo">Currículum (CV)</div>
+                    <div class="cj-estado-sub">@(!string.IsNullOrEmpty(Model.CvUrl) ? "Subido" : "Pendiente")</div>
+                </div>
+                <div class="cj-estado-carita">@Html.Raw(!string.IsNullOrEmpty(Model.CvUrl) ? "<i class='fa-solid fa-circle-check'></i>" : "<i class='fa-solid fa-triangle-exclamation'></i>")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="cj-card text-center p-3" style="position:sticky; top:var(--space-3);">
+                @if (!string.IsNullOrEmpty(Model.FotoUrl))
+                {
+                    <img src="@Model.FotoUrl" class="rounded-circle mb-2" style="width:84px;height:84px;object-fit:cover; box-shadow:var(--shadow-sm);" alt="Foto de perfil" />
+                }
+                else
+                {
+                    <div class="rounded-circle mb-2 mx-auto d-flex align-items-center justify-content-center"
+                         style="width:84px;height:84px;background:var(--color-primary-100);">
+                        <i class="fa-solid fa-user fa-lg" style="color:var(--color-primary-700);"></i>
+                    </div>
+                }
+                <h5 class="mb-0">@Model.Nombres @Model.Apellidos</h5>
+                @if (!string.IsNullOrEmpty(Model.Direccion))
+                {
+                    <p class="small text-secondary mb-2"><i class="fa-solid fa-location-dot me-1"></i>@Model.Direccion</p>
+                }
+                @if (!string.IsNullOrEmpty(Model.Disponibilidad))
+                {
+                    <span class="cj-badge @(Model.Disponibilidad == "Inmediata" ? "cj-badge-success" : "cj-badge-warning") mb-2">
+                        <i class="fa-solid fa-clock"></i> Disponibilidad: @Model.Disponibilidad
+                    </span>
+                }
+
+                <div class="progress mb-3" style="height:6px; background:var(--color-mist-soft);">
+                    <div class="progress-bar" role="progressbar" style="width:@(Model.PorcentajeCompletitud)%; background-color: var(--color-accent-500);"></div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.CvUrl))
+                {
+                    <a href="@Model.CvUrl" target="_blank" class="btn cj-btn-outline btn-sm w-100 mb-2" style="color: var(--color-primary-700); border-color: var(--color-primary-700);">
+                        <i class="fa-solid fa-file-arrow-down me-1"></i> Descargar CV
+                    </a>
+                }
+
+                <a asp-controller="Candidato" asp-action="GenerarCv" class="btn cj-btn-outline btn-sm w-100 mb-2" style="color: var(--color-accent-500); border-color: var(--color-accent-500);" title="Genera un CV en PDF con el diseño de ChambeaJobs, usando los datos de tu perfil">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Generar CV con mis datos
+                </a>
+
+                @if (!string.IsNullOrEmpty(Model.VideoCvUrl))
+                {
+                    <video controls class="w-100 mb-2" style="border-radius:var(--radius-sm); max-height:150px;" src="@Model.VideoCvUrl"></video>
+                }
+
+                <a asp-controller="Candidato" asp-action="EditarPerfil" class="btn cj-btn-primary btn-sm w-100">
+                    <i class="fa-solid fa-pen me-1"></i> Editar perfil
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="cj-card mb-3 p-3">
+                <h6 class="mb-2"><i class="fa-solid fa-briefcase me-2" style="color:var(--color-accent-500);"></i>Experiencia laboral</h6>
+                @if (!Model.Experiencias.Any())
+                {
+                    <p class="small text-secondary mb-0">Aún no has agregado experiencia laboral.</p>
+                }
+                else
+                {
+                    foreach (var exp in Model.Experiencias)
+                    {
+                        <div class="d-flex justify-content-between align-items-start py-1 border-bottom">
+                            <div>
+                                <span class="fw-semibold small">@exp.Puesto</span>
+                                <span class="small text-secondary"> — @exp.NombreEmpresa</span>
+                                @if (!string.IsNullOrEmpty(exp.Descripcion))
+                                {
+                                    <div class="small text-secondary">@exp.Descripcion</div>
+                                }
+                            </div>
+                            <span class="small text-secondary text-nowrap ms-2">
+                                @exp.FechaInicio.ToString("MMM yyyy") - @(exp.FechaFin.HasValue ? exp.FechaFin.Value.ToString("MMM yyyy") : "Actualidad")
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="cj-card mb-3 p-3">
+                <h6 class="mb-2"><i class="fa-solid fa-graduation-cap me-2" style="color:var(--color-accent-500);"></i>Educación</h6>
+                @if (!Model.Educaciones.Any())
+                {
+                    <p class="small text-secondary mb-0">Aún no has agregado formación académica.</p>
+                }
+                else
+                {
+                    foreach (var edu in Model.Educaciones)
+                    {
+                        <div class="d-flex justify-content-between align-items-start py-1 border-bottom">
+                            <div>
+                                <span class="fw-semibold small">@edu.TituloObtenido</span>
+                                <span class="small text-secondary"> — @edu.Institucion &middot; @edu.NivelEducativo</span>
+                                @if (!string.IsNullOrEmpty(edu.CategoriaNombre))
+                                {
+                                    <span class="cj-badge cj-badge-info ms-1" style="font-size:0.65rem;">@edu.CategoriaNombre</span>
+                                }
+                            </div>
+                            <span class="small text-secondary text-nowrap ms-2">
+                                @edu.FechaInicio.ToString("yyyy") - @(edu.FechaFin.HasValue ? edu.FechaFin.Value.ToString("yyyy") : "Actualidad")
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="cj-card p-3 h-100">
+                        <h6 class="mb-2"><i class="fa-solid fa-star me-2" style="color:var(--color-accent-500);"></i>Habilidades</h6>
+                        @if (!Model.Habilidades.Any())
+                        {
+                            <p class="small text-secondary mb-0">Sin agregar.</p>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var hab in Model.Habilidades)
+                                {
+                                    <span class="cj-badge cj-badge-info">@hab.Nombre @(string.IsNullOrEmpty(hab.NivelDominio) ? "" : $"({hab.NivelDominio})")</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="cj-card p-3 h-100">
+                        <h6 class="mb-2"><i class="fa-solid fa-language me-2" style="color:var(--color-accent-500);"></i>Idiomas</h6>
+                        @if (!Model.Idiomas.Any())
+                        {
+                            <p class="small text-secondary mb-0">Sin agregar.</p>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var idi in Model.Idiomas)
+                                {
+                                    <span class="cj-badge cj-badge-info">@idi.Nombre (@idi.Nivel)</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="cj-card p-3">
+                <h6 class="mb-2"><i class="fa-solid fa-certificate me-2" style="color:var(--color-accent-500);"></i>Documentos</h6>
+                @if (!Model.Certificados.Any())
+                {
+                    <p class="small text-secondary mb-0">Aún no has agregado documentos.</p>
+                }
+                else
+                {
+                    foreach (var cert in Model.Certificados)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                            <div>
+                                <span class="cj-badge cj-badge-info me-1" style="font-size:0.65rem;">@cert.TipoDocumento</span>
+                                <a href="@cert.ArchivoUrl" target="_blank" class="small fw-semibold text-decoration-none">
+                                    <i class="fa-solid fa-file-pdf me-1"></i>@cert.Nombre
+                                </a>
+                            </div>
+                            <span class="small text-secondary">
+                                @cert.InstitucionEmisora @(cert.FechaObtencion.HasValue ? $" · {cert.FechaObtencion.Value:MMM yyyy}" : "")
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

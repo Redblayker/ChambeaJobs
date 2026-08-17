@@ -1,0 +1,723 @@
+@model EditarPerfilCandidatoDto
+@{
+    ViewData["Title"] = "Editar mi perfil";
+    var experiencias = ViewBag.Experiencias as List<ExperienciaDto> ?? new List<ExperienciaDto>();
+    var educaciones = ViewBag.Educaciones as List<EducacionDto> ?? new List<EducacionDto>();
+    var habilidades = ViewBag.Habilidades as List<HabilidadCandidatoDto> ?? new List<HabilidadCandidatoDto>();
+    var idiomas = ViewBag.Idiomas as List<IdiomaCandidatoDto> ?? new List<IdiomaCandidatoDto>();
+    var certificados = ViewBag.Certificados as List<CertificadoDto> ?? new List<CertificadoDto>();
+    var idiomasDisponibles = ViewBag.IdiomasDisponibles as List<IdiomaOptionDto> ?? new List<IdiomaOptionDto>();
+}
+
+<div class="container py-5">
+    <h2 class="mb-4">Editar mi perfil</h2>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <ul class="nav nav-tabs mb-4" id="tabsPerfilCandidato" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-datos" type="button">Datos básicos</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-experiencia" type="button">Experiencia</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-educacion" type="button">Educación</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-habilidades" type="button">Habilidades</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-idiomas" type="button">Idiomas</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-certificados" type="button">Documentos</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- ---------- DATOS BÁSICOS ---------- -->
+        <div class="tab-pane fade show active" id="tab-datos">
+            <div class="cj-card">
+                <form asp-controller="Candidato" asp-action="EditarPerfil" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Nombres" class="form-label">Nombres</label>
+                            <input asp-for="Nombres" class="form-control" />
+                            <span asp-validation-for="Nombres" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Apellidos" class="form-label">Apellidos</label>
+                            <input asp-for="Apellidos" class="form-control" />
+                            <span asp-validation-for="Apellidos" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Direccion" class="form-label">Dirección</label>
+                        <input asp-for="Direccion" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Disponibilidad" class="form-label">Disponibilidad para empezar a trabajar</label>
+                        <select asp-for="Disponibilidad" class="form-select">
+                            <option value="">Sin especificar</option>
+                            <option value="Inmediata">Inmediata</option>
+                            <option value="15 días">15 días</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Foto de perfil (JPG/PNG, máx. 2MB)</label>
+                            <input asp-for="Foto" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
+                            @if (!string.IsNullOrEmpty(Model.FotoUrlActual))
+                            {
+                                <div class="form-text">Foto actual: <img src="@Model.FotoUrlActual" style="height:32px;border-radius:50%;" /></div>
+                            }
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CV en PDF (máx. 5MB)</label>
+                            <input asp-for="Cv" type="file" class="form-control" accept=".pdf" />
+                            @if (!string.IsNullOrEmpty(Model.CvNombreActual))
+                            {
+                                <div class="form-text">CV actual: @Model.CvNombreActual</div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fa-solid fa-video me-1"></i>Video Currículum
+                        </label>
+
+                        @if (!string.IsNullOrEmpty(Model.VideoCvUrlActual))
+                        {
+                            <div class="mb-2">
+                                <video controls style="max-width:100%; max-height:220px; border-radius:var(--radius-md);" src="@Model.VideoCvUrlActual"></video>
+                                <div class="form-text">Video actual guardado. Sube un archivo nuevo para reemplazarlo.</div>
+                            </div>
+                        }
+
+                        <div class="form-text mb-2">Sube un archivo de video ya grabado (MP4/WEBM/MOV, máx. 50MB).</div>
+
+                        <input asp-for="VideoCv" type="file" class="form-control" accept="video/mp4,video/webm,video/quicktime" id="input-video-cv" />
+                        <span asp-validation-for="VideoCv" class="text-danger small"></span>
+                        <div class="form-text">Al guardar un video nuevo, se notificará automáticamente a las empresas donde tienes postulaciones activas.</div>
+                    </div>
+
+                    <button type="submit" class="btn cj-btn-primary">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ---------- EXPERIENCIA ---------- -->
+        <div class="tab-pane fade" id="tab-experiencia">
+            <div class="row">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="cj-card">
+                        <h5 class="mb-3">Agregar experiencia</h5>
+                        <form asp-controller="Candidato" asp-action="AgregarExperiencia" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Empresa</label>
+                                <input name="NombreEmpresa" class="form-control" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Puesto</label>
+                                <input name="Puesto" class="form-control" required />
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha de inicio</label>
+                                    <input name="FechaInicio" type="date" class="form-control" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha de fin (vacío = actual)</label>
+                                    <input name="FechaFin" type="date" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea name="Descripcion" class="form-control" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn cj-btn-primary">Agregar experiencia</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="cj-card" style="max-height:520px; overflow-y:auto;">
+                        <h6 class="small text-secondary text-uppercase mb-3">Ya registradas (@experiencias.Count)</h6>
+                        @if (!experiencias.Any())
+                        {
+                            <p class="small text-secondary mb-0">Todavía no has agregado experiencia laboral.</p>
+                        }
+                        @foreach (var exp in experiencias)
+                        {
+                            <div class="d-flex flex-row justify-content-between align-items-center py-2 border-bottom item-perfil" id="item-experiencia-@exp.Id">
+                                <div>
+                                    <div class="fw-semibold">@exp.Puesto &middot; @exp.NombreEmpresa</div>
+                                    <div class="small text-secondary">
+                                        @exp.FechaInicio.ToString("MMM yyyy") - @(exp.FechaFin.HasValue ? exp.FechaFin.Value.ToString("MMM yyyy") : "Actualidad")
+                                    </div>
+                                </div>
+                                <form asp-controller="Candidato" asp-action="EliminarExperiencia" method="post" onsubmit="return confirm('¿Eliminar esta experiencia?');">
+                                    <input type="hidden" name="id" value="@exp.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------- EDUCACIÓN ---------- -->
+        <div class="tab-pane fade" id="tab-educacion">
+            @{
+                var institucionesDisponibles = ViewBag.Instituciones as List<InstitucionOptionDto> ?? new();
+            }
+            <div class="row">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="cj-card">
+                        <h5 class="mb-3">Agregar educación</h5>
+                        <form asp-controller="Candidato" asp-action="AgregarEducacion" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Nivel educativo</label>
+                                <select name="NivelEducativo" id="selectNivelEducativo" class="form-select" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="Bachillerato">Bachillerato (secundaria)</option>
+                                    <option value="Técnico">Técnico</option>
+                                    <option value="Universitario">Universitario</option>
+                                    <option value="Posgrado">Posgrado</option>
+                                    <option value="Curso">Curso</option>
+                                </select>
+                                <div class="form-text">
+                                    ¿Solo terminaste secundaria y no tienes estudios técnicos ni universitarios? Elige <strong>"Bachillerato"</strong> — no necesitas llenar nada de universidad, y vas a poder postularte igual a todas las vacantes que no pidan una carrera específica.
+                                </div>
+                            </div>
+
+                            <div id="bloque-catalogo-universitario">
+                                <div class="alert alert-info small">
+                                    <i class="fa-solid fa-circle-info me-1"></i>
+                                    La carrera/área profesional que elijas determina a qué vacantes puedes postularte de forma exclusiva a esa área —
+                                    las carreras que aparecen dependen de la institución que selecciones, según lo que esa institución
+                                    realmente ofrece.
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Institución</label>
+                                    <select id="selectInstitucionEducacion" class="form-select">
+                                        <option value="">Selecciona...</option>
+                                        @foreach (var inst in institucionesDisponibles)
+                                        {
+                                            <option value="@inst.Id">@inst.Nombre@(inst.Tipo == "Técnico" ? " (técnico)" : "")</option>
+                                        }
+                                        <option value="otra">Otra institución (no está en la lista)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="bloque-facultad-carrera">
+                                    <label class="form-label">Facultad / Área</label>
+                                    <select id="selectFacultadEducacion" class="form-select" disabled>
+                                        <option value="">Primero selecciona una institución...</option>
+                                    </select>
+                                    <label class="form-label mt-2">Carrera</label>
+                                    <select id="selectCarreraEducacion" class="form-select" disabled>
+                                        <option value="">Primero selecciona una facultad...</option>
+                                    </select>
+                                    <div class="form-text">Solo se muestran las carreras que esa institución realmente ofrece, según nuestro catálogo.</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" id="labelNombreInstitucion">Nombre de la institución</label>
+                                <input type="text" name="Institucion" id="inputNombreInstitucion" class="form-control" readonly
+                                       placeholder="Selecciona una institución arriba" required />
+                                <div class="form-text" id="ayudaNombreInstitucion">Se llena solo al elegir de la lista. Si elegiste "Otra institución", escríbela aquí.</div>
+                            </div>
+
+                            <input type="hidden" name="CategoriaId" id="hiddenCategoriaIdEducacion" />
+                            <input type="hidden" name="InstitucionId" id="hiddenInstitucionIdEducacion" />
+                            <input type="hidden" name="CarreraId" id="hiddenCarreraIdEducacion" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Título obtenido</label>
+                                <input name="TituloObtenido" id="inputTituloObtenido" class="form-control" required />
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha de inicio</label>
+                                    <input name="FechaInicio" id="inputFechaInicioEducacion" type="date" class="form-control" required />
+                                    <div class="form-text">Si no la recuerdas exacta, pon aproximadamente el año en que empezaste.</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha de fin (vacío = en curso)</label>
+                                    <input name="FechaFin" type="date" class="form-control" />
+                                </div>
+                            </div>
+                            <button type="submit" class="btn cj-btn-primary">Agregar educación</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="cj-card" style="max-height:640px; overflow-y:auto;">
+                        <h6 class="small text-secondary text-uppercase mb-3">Ya registradas (@educaciones.Count)</h6>
+                        @if (!educaciones.Any())
+                        {
+                            <p class="small text-secondary mb-0">Todavía no has agregado educación.</p>
+                        }
+                        @foreach (var edu in educaciones)
+                        {
+                            <div class="d-flex flex-row justify-content-between align-items-center py-2 border-bottom item-perfil" id="item-educacion-@edu.Id">
+                                <div>
+                                    <div class="fw-semibold">@edu.TituloObtenido &middot; @edu.Institucion</div>
+                                    <div class="small text-secondary">
+                                        @edu.NivelEducativo
+                                        @if (!string.IsNullOrEmpty(edu.CarreraNombre))
+                                        {
+                                            <span class="cj-badge cj-badge-info ms-1">@edu.CarreraNombre</span>
+                                        }
+                                        else if (!string.IsNullOrEmpty(edu.CategoriaNombre))
+                                        {
+                                            <span class="cj-badge cj-badge-info ms-1">@edu.CategoriaNombre</span>
+                                        }
+                                    </div>
+                                </div>
+                                <form asp-controller="Candidato" asp-action="EliminarEducacion" method="post" onsubmit="return confirm('¿Eliminar esta educación?');">
+                                    <input type="hidden" name="id" value="@edu.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------- HABILIDADES ---------- -->
+        <div class="tab-pane fade" id="tab-habilidades">
+            <div class="row">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="cj-card">
+                        <h5 class="mb-3">Agregar habilidad</h5>
+                        <form asp-controller="Candidato" asp-action="AgregarHabilidad" method="post" class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label">Habilidad</label>
+                                <input name="nombreHabilidad" class="form-control" required placeholder="Ej. Excel, Atención al cliente..." />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nivel</label>
+                                <select name="nivelDominio" class="form-select">
+                                    <option value="">Sin especificar</option>
+                                    <option value="Básico">Básico</option>
+                                    <option value="Intermedio">Intermedio</option>
+                                    <option value="Avanzado">Avanzado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn cj-btn-primary w-100">Agregar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="cj-card">
+                        <h6 class="small text-secondary text-uppercase mb-3">Ya registradas (@habilidades.Count)</h6>
+                        @if (!habilidades.Any())
+                        {
+                            <p class="small text-secondary mb-0">Todavía no has agregado habilidades.</p>
+                        }
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var hab in habilidades)
+                            {
+                                <div class="cj-badge cj-badge-info d-flex align-items-center gap-2">
+                                    <span>@hab.Nombre @(string.IsNullOrEmpty(hab.NivelDominio) ? "" : $"({hab.NivelDominio})")</span>
+                                    <form asp-controller="Candidato" asp-action="EliminarHabilidad" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@hab.HabilidadId" />
+                                        <button type="submit" class="btn btn-sm p-0 border-0 bg-transparent" style="color:var(--color-error);">&times;</button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------- IDIOMAS ---------- -->
+        <div class="tab-pane fade" id="tab-idiomas">
+            <div class="row">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="cj-card">
+                        <h5 class="mb-3">Agregar idioma</h5>
+                        <form asp-controller="Candidato" asp-action="AgregarIdioma" method="post" class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label">Idioma</label>
+                                <select name="idiomaId" class="form-select" required>
+                                    <option value="">Selecciona...</option>
+                                    @foreach (var idioma in idiomasDisponibles)
+                                    {
+                                        <option value="@idioma.Id">@idioma.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nivel (MCER)</label>
+                                <select name="nivel" class="form-select" required>
+                                    <option value="A1">A1 &middot; Principiante</option>
+                                    <option value="A2">A2 &middot; Básico</option>
+                                    <option value="B1">B1 &middot; Intermedio</option>
+                                    <option value="B2" selected>B2 &middot; Intermedio alto</option>
+                                    <option value="C1">C1 &middot; Avanzado</option>
+                                    <option value="C2">C2 &middot; Dominio</option>
+                                    <option value="Nativo">Nativo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn cj-btn-primary w-100">Agregar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="cj-card">
+                        <h6 class="small text-secondary text-uppercase mb-3">Ya registrados (@idiomas.Count)</h6>
+                        @if (!idiomas.Any())
+                        {
+                            <p class="small text-secondary mb-0">Todavía no has agregado idiomas.</p>
+                        }
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var idi in idiomas)
+                            {
+                                <div class="cj-badge cj-badge-info d-flex align-items-center gap-2">
+                                    <span>@idi.Nombre (@idi.Nivel)</span>
+                                    <form asp-controller="Candidato" asp-action="EliminarIdioma" method="post" class="d-inline">
+                                        <input type="hidden" name="idiomaId" value="@idi.IdiomaId" />
+                                        <button type="submit" class="btn btn-sm p-0 border-0 bg-transparent" style="color:var(--color-error);">&times;</button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------- CERTIFICADOS ---------- -->
+        <div class="tab-pane fade" id="tab-certificados">
+            <div class="row">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="cj-card">
+                        <h5 class="mb-3">Agregar documento (PDF)</h5>
+                        <form asp-controller="Candidato" asp-action="AgregarCertificado" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de documento</label>
+                                <select name="tipoDocumento" class="form-select" required>
+                                    <option value="Certificado">Certificado</option>
+                                    <option value="Título académico">Título académico</option>
+                                    <option value="Diploma">Diploma</option>
+                                    <option value="Licencia profesional">Licencia profesional</option>
+                                    <option value="Portafolio">Portafolio</option>
+                                    <option value="Carta de recomendación">Carta de recomendación</option>
+                                    <option value="Constancia laboral">Constancia laboral</option>
+                                    <option value="Récord Policial">Récord Policial</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre del documento</label>
+                                <input name="nombre" class="form-control" required placeholder="Ej. AWS Cloud Practitioner" />
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Institución / persona emisora</label>
+                                    <input name="institucionEmisora" class="form-control" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha de obtención</label>
+                                    <input name="fechaObtencion" type="date" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Archivo PDF (máx. 5MB)</label>
+                                <input name="archivoPdf" type="file" class="form-control" accept=".pdf" required />
+                            </div>
+                            <button type="submit" class="btn cj-btn-primary">Agregar documento</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="cj-card" style="max-height:520px; overflow-y:auto;">
+                        <h6 class="small text-secondary text-uppercase mb-3">Ya registrados (@certificados.Count)</h6>
+                        @if (!certificados.Any())
+                        {
+                            <p class="small text-secondary mb-0">Todavía no has agregado documentos.</p>
+                        }
+                        @foreach (var cert in certificados)
+                        {
+                            <div class="d-flex flex-row justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <span class="cj-badge cj-badge-info me-2">@cert.TipoDocumento</span>
+                                    <div class="fw-semibold d-inline">
+                                        <a href="@cert.ArchivoUrl" target="_blank"><i class="fa-solid fa-file-pdf me-1"></i>@cert.Nombre</a>
+                                    </div>
+                                    <div class="small text-secondary">
+                                        @cert.InstitucionEmisora @(cert.FechaObtencion.HasValue ? $" · {cert.FechaObtencion.Value:MMM yyyy}" : "")
+                                    </div>
+                                </div>
+                                <form asp-controller="Candidato" asp-action="EliminarCertificado" method="post" onsubmit="return confirm('¿Eliminar este documento?');">
+                                    <input type="hidden" name="id" value="@cert.Id" />
+                                    <button type="submit" class="btn btn-sm text-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ---------- 1. Mantener la pestaña activa tras cada guardado ----------
+        // Cada acción de "Agregar/Eliminar X" en el controlador redirige de
+        // vuelta con un fragmento tipo "#tab-habilidades" en la URL. Aquí lo
+        // leemos al cargar la página para reactivar esa misma pestaña, en vez
+        // de que siempre vuelva a mostrar "Datos básicos".
+        document.addEventListener('DOMContentLoaded', function () {
+            const hash = window.location.hash;
+            if (hash) {
+                const botonPestana = document.querySelector('button[data-bs-target="' + hash + '"]');
+                if (botonPestana) {
+                    const instancia = new bootstrap.Tab(botonPestana);
+                    instancia.show();
+                    botonPestana.scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            // También recordamos la pestaña al hacer clic en cualquiera (por si
+            // el usuario navega manualmente y recarga la página).
+            document.querySelectorAll('#tabsPerfilCandidato button[data-bs-target]').forEach(function (boton) {
+                boton.addEventListener('shown.bs.tab', function (e) {
+                    history.replaceState(null, '', e.target.getAttribute('data-bs-target'));
+                });
+            });
+
+            // ---------- 2. Llevar la vista hasta lo que se acaba de agregar ----------
+            // Antes, al agregar una experiencia/educación con fecha antigua,
+            // el nuevo registro podía quedar varias filas más abajo en la
+            // lista (se ordena cronológicamente) y el usuario no sabía si de
+            // verdad se guardó — tenía que buscarlo. Ahora, si la URL trae
+            // ?nuevoId=X, se le hace scroll automático y se resalta un
+            // instante con un parpadeo suave, sin importar en qué posición
+            // de la lista haya quedado.
+            const parametros = new URLSearchParams(window.location.search);
+            const nuevoId = parametros.get('nuevoId');
+            const tipo = parametros.get('tipo');
+            if (nuevoId && tipo) {
+                const elemento = document.getElementById('item-' + tipo + '-' + nuevoId);
+                if (elemento) {
+                    setTimeout(function () {
+                        elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        elemento.classList.add('cj-item-nuevo');
+                        setTimeout(function () { elemento.classList.remove('cj-item-nuevo'); }, 2200);
+                    }, 150);
+                }
+                // Limpia el query string para que un refresh no vuelva a resaltar.
+                history.replaceState(null, '', window.location.pathname + window.location.hash);
+            }
+        });
+
+        // ---------- 3. Catálogo de 3 pasos: Institución -> Facultad -> Carrera ----------
+        // Al elegir una institución del catálogo (ej. "UNAN-Managua"), se
+        // cargan por AJAX SOLO sus facultades reales; al elegir una facultad,
+        // solo las carreras que esa facultad realmente ofrece (verificadas
+        // contra el sitio oficial de cada universidad) — así no se puede
+        // elegir, por ejemplo, "Veterinaria" si se seleccionó una
+        // universidad que no la imparte. Si elige "Otra institución", se
+        // salta el paso de Facultad y se cargan todas las carreras del
+        // catálogo sin filtrar (agrupadas por categoría).
+        const selectInstitucion = document.getElementById('selectInstitucionEducacion');
+        const inputNombreInstitucion = document.getElementById('inputNombreInstitucion');
+        const selectFacultad = document.getElementById('selectFacultadEducacion');
+        const selectCarrera = document.getElementById('selectCarreraEducacion');
+        const hiddenCategoriaId = document.getElementById('hiddenCategoriaIdEducacion');
+        const hiddenInstitucionId = document.getElementById('hiddenInstitucionIdEducacion');
+        const hiddenCarreraId = document.getElementById('hiddenCarreraIdEducacion');
+
+        // ---------- 2.5. Alternar entre modo "universidad" y modo simple (Bachillerato) ----------
+        const selectNivelEducativo = document.getElementById('selectNivelEducativo');
+        const bloqueCatalogoUniversitario = document.getElementById('bloque-catalogo-universitario');
+        const labelNombreInstitucion = document.getElementById('labelNombreInstitucion');
+        const ayudaNombreInstitucion = document.getElementById('ayudaNombreInstitucion');
+        const inputTituloObtenido = document.getElementById('inputTituloObtenido');
+
+        if (selectNivelEducativo) {
+            selectNivelEducativo.addEventListener('change', function () {
+                const esBachillerato = this.value === 'Bachillerato';
+
+                bloqueCatalogoUniversitario.style.display = esBachillerato ? 'none' : '';
+
+                if (esBachillerato) {
+                    // Modo simple: se limpia todo lo del catálogo universitario
+                    // (institución/facultad/carrera) y el campo de nombre de
+                    // institución queda libre para escribir el colegio.
+                    if (selectInstitucion) selectInstitucion.value = '';
+                    hiddenInstitucionId.value = '';
+                    hiddenCategoriaId.value = '';
+                    hiddenCarreraId.value = '';
+                    inputNombreInstitucion.value = '';
+                    inputNombreInstitucion.readOnly = false;
+                    labelNombreInstitucion.textContent = 'Colegio / centro de estudios';
+                    inputNombreInstitucion.placeholder = 'Ej. Instituto Nacional, Colegio San José, etc.';
+                    ayudaNombreInstitucion.textContent = '';
+                    if (!inputTituloObtenido.value) {
+                        inputTituloObtenido.value = 'Bachiller';
+                    }
+                } else {
+                    labelNombreInstitucion.textContent = 'Nombre de la institución';
+                    inputNombreInstitucion.readOnly = true;
+                    inputNombreInstitucion.value = '';
+                    inputNombreInstitucion.placeholder = 'Selecciona una institución arriba';
+                    ayudaNombreInstitucion.textContent = 'Se llena solo al elegir de la lista. Si elegiste "Otra institución", escríbela aquí.';
+                    if (inputTituloObtenido.value === 'Bachiller') {
+                        inputTituloObtenido.value = '';
+                    }
+                }
+            });
+        }
+
+        function poblarCarreraConGrupos(carreras) {
+            hiddenCategoriaId.value = '';
+            hiddenCarreraId.value = '';
+
+            if (!carreras || carreras.length === 0) {
+                selectCarrera.innerHTML = '<option value="">Sin carreras registradas todavía</option>';
+                selectCarrera.disabled = true;
+                return;
+            }
+
+            selectCarrera.innerHTML = '<option value="">Selecciona...</option>';
+            const grupos = {};
+            carreras.forEach(function (c) {
+                if (c.categoriaNombre) {
+                    if (!grupos[c.categoriaNombre]) {
+                        const grupo = document.createElement('optgroup');
+                        grupo.label = c.categoriaNombre;
+                        grupos[c.categoriaNombre] = grupo;
+                        selectCarrera.appendChild(grupo);
+                    }
+                    const opcion = document.createElement('option');
+                    opcion.value = c.id;
+                    opcion.textContent = c.nombre;
+                    opcion.dataset.categoriaId = c.categoriaId;
+                    grupos[c.categoriaNombre].appendChild(opcion);
+                } else {
+                    const opcion = document.createElement('option');
+                    opcion.value = c.id;
+                    opcion.textContent = c.nombre;
+                    opcion.dataset.categoriaId = c.categoriaId;
+                    selectCarrera.appendChild(opcion);
+                }
+            });
+            selectCarrera.disabled = false;
+        }
+
+        function poblarFacultades(facultades) {
+            if (!facultades || facultades.length === 0) {
+                selectFacultad.innerHTML = '<option value="">Sin facultades registradas todavía para esta institución</option>';
+                selectFacultad.disabled = true;
+                return;
+            }
+            selectFacultad.innerHTML = '<option value="">Selecciona...</option>';
+            facultades.forEach(function (f) {
+                const opcion = document.createElement('option');
+                opcion.value = f.id;
+                opcion.textContent = f.nombre;
+                selectFacultad.appendChild(opcion);
+            });
+            selectFacultad.disabled = false;
+        }
+
+        if (selectInstitucion && selectFacultad && selectCarrera) {
+            selectInstitucion.addEventListener('change', async function () {
+                const valor = this.value;
+                selectFacultad.innerHTML = '<option value="">Cargando...</option>';
+                selectFacultad.disabled = true;
+                selectCarrera.innerHTML = '<option value="">Primero selecciona una facultad...</option>';
+                selectCarrera.disabled = true;
+                hiddenCategoriaId.value = '';
+                hiddenCarreraId.value = '';
+
+                if (!valor) {
+                    inputNombreInstitucion.value = '';
+                    inputNombreInstitucion.readOnly = true;
+                    hiddenInstitucionId.value = '';
+                    selectFacultad.innerHTML = '<option value="">Primero selecciona una institución...</option>';
+                    return;
+                }
+
+                if (valor === 'otra') {
+                    inputNombreInstitucion.value = '';
+                    inputNombreInstitucion.readOnly = false;
+                    inputNombreInstitucion.focus();
+                    hiddenInstitucionId.value = '';
+                    // Sin institución del catálogo no hay facultades que filtrar —
+                    // se salta ese paso y se cargan todas las carreras agrupadas.
+                    selectFacultad.innerHTML = '<option value="">No aplica ("Otra institución")</option>';
+                    selectFacultad.disabled = true;
+                    selectCarrera.innerHTML = '<option value="">Cargando...</option>';
+                    try {
+                        const respuesta = await fetch('/Candidato/ObtenerTodasLasCarrerasAgrupadas');
+                        poblarCarreraConGrupos(await respuesta.json());
+                    } catch (err) {
+                        selectCarrera.innerHTML = '<option value="">No se pudo cargar la lista</option>';
+                    }
+                    return;
+                }
+
+                // Institución del catálogo — paso 2: cargar sus facultades reales
+                inputNombreInstitucion.value = this.options[this.selectedIndex].text;
+                inputNombreInstitucion.readOnly = true;
+                hiddenInstitucionId.value = valor;
+
+                try {
+                    const respuesta = await fetch('/Candidato/ObtenerFacultadesPorInstitucion?institucionId=' + valor);
+                    poblarFacultades(await respuesta.json());
+                } catch (err) {
+                    selectFacultad.innerHTML = '<option value="">No se pudo cargar la lista</option>';
+                }
+            });
+
+            selectFacultad.addEventListener('change', async function () {
+                const valor = this.value;
+                selectCarrera.innerHTML = '<option value="">Cargando...</option>';
+                selectCarrera.disabled = true;
+                hiddenCategoriaId.value = '';
+                hiddenCarreraId.value = '';
+
+                if (!valor) {
+                    selectCarrera.innerHTML = '<option value="">Primero selecciona una facultad...</option>';
+                    return;
+                }
+
+                try {
+                    const respuesta = await fetch('/Candidato/ObtenerCarrerasPorFacultad?facultadId=' + valor);
+                    poblarCarreraConGrupos(await respuesta.json());
+                } catch (err) {
+                    selectCarrera.innerHTML = '<option value="">No se pudo cargar la lista</option>';
+                }
+            });
+
+            selectCarrera.addEventListener('change', function () {
+                const opcion = this.options[this.selectedIndex];
+                hiddenCarreraId.value = this.value;
+                hiddenCategoriaId.value = (opcion && opcion.dataset.categoriaId) ? opcion.dataset.categoriaId : '';
+            });
+        }
+    </script>
+    <style>
+        .cj-item-nuevo {
+            animation: cjDestacarNuevo 2.2s ease;
+        }
+        @@keyframes cjDestacarNuevo {
+            0% { background-color: var(--color-accent-100); box-shadow: 0 0 0 2px var(--color-accent-500); }
+            100% { background-color: var(--color-white); box-shadow: none; }
+        }
+    </style>
+}

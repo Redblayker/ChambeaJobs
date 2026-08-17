@@ -1,0 +1,65 @@
+@model EstadoResultadosDto
+@{
+    ViewData["Title"] = "Estado de resultados - Finanzas";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" style="font-size:1.3rem;">Estado de resultados</h2>
+        <a asp-action="Dashboard" class="btn cj-btn-outline btn-sm">← Dashboard</a>
+    </div>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-auto">
+            <label class="form-label small mb-0">Desde</label>
+            <input type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-0">Hasta</label>
+            <input type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn cj-btn-outline">Consultar</button>
+        </div>
+    </form>
+
+    <div class="cj-card mb-3" style="max-width:500px;">
+        <div class="d-flex justify-content-between border-bottom py-2">
+            <span>Total de ingresos</span>
+            <span class="fw-bold text-success">$@Model.TotalIngresos.ToString("0.00")</span>
+        </div>
+        <div class="d-flex justify-content-between border-bottom py-2">
+            <span>Total de gastos</span>
+            <span class="fw-bold text-danger">$@Model.TotalGastos.ToString("0.00")</span>
+        </div>
+        <div class="d-flex justify-content-between py-2">
+            <span class="fw-bold">Resultado del período</span>
+            <span class="fw-bold" style="font-size:1.2rem;">$@Model.ResultadoDelPeriodo.ToString("0.00")</span>
+        </div>
+        <p class="text-secondary small mb-0 mt-2">
+            Este reporte es administrativo (ingresos - gastos). No representa una utilidad fiscal — eso requeriría
+            configuración de impuestos, que este sistema todavía no aplica automáticamente.
+        </p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="cj-card">
+                <h6 class="mb-2">Ingresos por categoría</h6>
+                @foreach (var c in Model.IngresosPorCategoria)
+                {
+                    <div class="d-flex justify-content-between small border-bottom py-1"><span>@c.Etiqueta</span><span>$@c.Monto.ToString("0.00")</span></div>
+                }
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="cj-card">
+                <h6 class="mb-2">Gastos por categoría</h6>
+                @foreach (var c in Model.GastosPorCategoria)
+                {
+                    <div class="d-flex justify-content-between small border-bottom py-1"><span>@c.Etiqueta</span><span>$@c.Monto.ToString("0.00")</span></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

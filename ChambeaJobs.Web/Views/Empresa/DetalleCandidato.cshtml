@@ -1,0 +1,186 @@
+@model CandidatoPerfilDto
+@{
+    ViewData["Title"] = $"{Model.Nombres} {Model.Apellidos}";
+    var totalSecciones = new[] {
+        Model.Experiencias.Any(), Model.Educaciones.Any(), Model.Habilidades.Any(),
+        Model.Idiomas.Any(), Model.Certificados.Any()
+    }.Count(x => x);
+}
+
+<div class="container py-5">
+    @* ---------- Encabezado con foto grande sobre fondo de marca ---------- *@
+    <div class="cj-card p-0 overflow-hidden mb-4">
+        <div style="height:110px; background:linear-gradient(135deg, var(--color-primary-900), var(--color-primary-700));"></div>
+        <div class="px-4 pb-4">
+            <div class="d-flex align-items-start gap-3 flex-wrap">
+                @if (!string.IsNullOrEmpty(Model.FotoUrl))
+                {
+                    <img src="@Model.FotoUrl" class="rounded-circle" style="width:112px;height:112px;object-fit:cover; border:4px solid white; box-shadow:var(--shadow-md); margin-top:-56px;" alt="Foto de perfil" />
+                }
+                else
+                {
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:112px;height:112px;background:var(--color-primary-100); border:4px solid white; box-shadow:var(--shadow-md); margin-top:-56px;">
+                        <i class="fa-solid fa-user fa-2x" style="color:var(--color-primary-700);"></i>
+                    </div>
+                }
+                <div class="flex-grow-1 pt-2">
+                    <h3 class="mb-0">@Model.Nombres @Model.Apellidos</h3>
+                    <div class="d-flex flex-wrap gap-2 mt-1">
+                        @if (!string.IsNullOrEmpty(Model.Direccion))
+                        {
+                            <span class="cj-badge cj-badge-info"><i class="fa-solid fa-location-dot me-1"></i>@Model.Direccion</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Disponibilidad))
+                        {
+                            <span class="cj-badge cj-badge-success"><i class="fa-solid fa-circle-check me-1"></i>@Model.Disponibilidad</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-2 pb-1">
+                    @if (!string.IsNullOrEmpty(Model.CvUrl))
+                    {
+                        <a href="@Model.CvUrl" target="_blank" class="btn cj-btn-primary">
+                            <i class="fa-solid fa-file-arrow-down me-1"></i> Descargar CV
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.VideoCvUrl))
+            {
+                <div class="mt-3" style="max-width:360px;">
+                    <video controls class="w-100" style="border-radius:var(--radius-md); box-shadow:var(--shadow-xs);" src="@Model.VideoCvUrl"></video>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (totalSecciones == 0)
+    {
+        <div class="cj-card text-center py-5">
+            <i class="fa-regular fa-folder-open fa-2x mb-3" style="color:var(--color-slate-soft);"></i>
+            <p class="small text-secondary mb-0">Este candidato todavía no ha completado su perfil.</p>
+        </div>
+    }
+
+    <div class="row g-3">
+        @* ---------- Experiencia ---------- *@
+        @if (Model.Experiencias.Any())
+        {
+            <div class="col-lg-6">
+                <div class="cj-card h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                            <i class="fa-solid fa-briefcase" style="color:var(--color-accent-700);"></i>
+                        </div>
+                        <h6 class="mb-0">Experiencia laboral</h6>
+                    </div>
+                    @foreach (var exp in Model.Experiencias)
+                    {
+                        <div class="mb-3 pb-3 border-bottom position-relative ps-3" style="border-left: 2px solid var(--color-mist);">
+                            <div class="position-absolute" style="left:-5px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--color-accent-500);"></div>
+                            <div class="fw-semibold">@exp.Puesto</div>
+                            <div class="small text-secondary">@exp.NombreEmpresa</div>
+                            <div class="small text-secondary">
+                                @exp.FechaInicio.ToString("MMM yyyy") - @(exp.FechaFin.HasValue ? exp.FechaFin.Value.ToString("MMM yyyy") : "Actualidad")
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* ---------- Educación ---------- *@
+        @if (Model.Educaciones.Any())
+        {
+            <div class="col-lg-6">
+                <div class="cj-card h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-primary-100);">
+                            <i class="fa-solid fa-graduation-cap" style="color:var(--color-primary-700);"></i>
+                        </div>
+                        <h6 class="mb-0">Educación</h6>
+                    </div>
+                    @foreach (var edu in Model.Educaciones)
+                    {
+                        <div class="mb-3 pb-3 border-bottom position-relative ps-3" style="border-left: 2px solid var(--color-mist);">
+                            <div class="position-absolute" style="left:-5px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--color-primary-700);"></div>
+                            <div class="fw-semibold">@edu.TituloObtenido</div>
+                            <div class="small text-secondary">@edu.Institucion &middot; @edu.NivelEducativo</div>
+                            @if (!string.IsNullOrEmpty(edu.CarreraNombre))
+                            {
+                                <span class="cj-badge cj-badge-info mt-1" style="font-size:0.7rem;">@edu.CarreraNombre</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* ---------- Habilidades + Idiomas en una sola tarjeta ---------- *@
+        @if (Model.Habilidades.Any() || Model.Idiomas.Any())
+        {
+            <div class="col-lg-6">
+                <div class="cj-card h-100">
+                    @if (Model.Habilidades.Any())
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                                <i class="fa-solid fa-star" style="color:var(--color-accent-700);"></i>
+                            </div>
+                            <h6 class="mb-0">Habilidades</h6>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 @(Model.Idiomas.Any() ? "mb-4" : "")">
+                            @foreach (var hab in Model.Habilidades)
+                            {
+                                <span class="cj-badge cj-badge-info">@hab.Nombre @(string.IsNullOrEmpty(hab.NivelDominio) ? "" : $"({hab.NivelDominio})")</span>
+                            }
+                        </div>
+                    }
+                    @if (Model.Idiomas.Any())
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-primary-100);">
+                                <i class="fa-solid fa-language" style="color:var(--color-primary-700);"></i>
+                            </div>
+                            <h6 class="mb-0">Idiomas</h6>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var idi in Model.Idiomas)
+                            {
+                                <span class="cj-badge cj-badge-info">@idi.Nombre (@idi.Nivel)</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* ---------- Certificados ---------- *@
+        @if (Model.Certificados.Any())
+        {
+            <div class="col-lg-6">
+                <div class="cj-card h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                            <i class="fa-solid fa-certificate" style="color:var(--color-accent-700);"></i>
+                        </div>
+                        <h6 class="mb-0">Certificados</h6>
+                    </div>
+                    @foreach (var cert in Model.Certificados)
+                    {
+                        <div class="mb-2 pb-2 border-bottom">
+                            <a href="@cert.ArchivoUrl" target="_blank" class="fw-semibold text-decoration-none" style="color:var(--color-ink);">
+                                <i class="fa-solid fa-file-pdf me-1" style="color:var(--color-accent-500);"></i>@cert.Nombre
+                            </a>
+                            <div class="small text-secondary">
+                                @cert.InstitucionEmisora @(cert.FechaObtencion.HasValue ? $" · {cert.FechaObtencion.Value:MMM yyyy}" : "")
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

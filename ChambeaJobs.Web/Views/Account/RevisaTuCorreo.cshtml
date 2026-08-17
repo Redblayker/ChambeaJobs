@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Confirma tu correo";
+}
+
+<div class="container py-5" style="min-height:70vh; display:flex; align-items:center;">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6">
+            <div class="cj-card text-center" style="box-shadow: var(--shadow-md);">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3 mx-auto"
+                     style="width:72px; height:72px; border-radius:50%; background:var(--color-primary-100);">
+                    <i class="fa-solid fa-envelope-open-text fa-lg" style="color: var(--color-primary-700);"></i>
+                </div>
+                <h2 class="mb-3">¡Ya casi! Confirma tu correo</h2>
+                <p class="text-secondary mb-4">
+                    Te enviamos un enlace de confirmación a <strong>@ViewBag.Correo</strong>.
+                    Ábrelo desde tu bandeja de entrada para activar tu cuenta y poder iniciar sesión.
+                </p>
+
+                <p class="small text-secondary mb-2">¿No te llegó el correo? Revisa spam, o pídenos que te lo reenviemos:</p>
+                <form asp-controller="Account" asp-action="ReenviarConfirmacion" method="post" class="d-flex gap-2 justify-content-center">
+                    <input type="hidden" name="correo" value="@ViewBag.Correo" />
+                    <button type="submit" class="btn cj-btn-outline btn-sm" style="color:var(--color-primary-700); border-color:var(--color-primary-700);">
+                        Reenviar correo de confirmación
+                    </button>
+                </form>
+
+                <a asp-controller="Account" asp-action="Login" class="d-block small mt-4">Volver a inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+</div>

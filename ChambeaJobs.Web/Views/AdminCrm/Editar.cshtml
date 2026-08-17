@@ -1,0 +1,15 @@
+@model CrmEmpresaFormDto
+@{
+    ViewData["Title"] = "CRM - Editar empresa";
+}
+
+<h2>Editar empresa (CRM)</h2>
+
+<div class="cj-card">
+    <form asp-action="Editar" asp-route-id="@ViewBag.Id" method="post">
+        @Html.AntiForgeryToken()
+        <partial name="_Form" model="Model" />
+        <button type="submit" class="btn cj-btn-primary">Guardar cambios</button>
+        <a asp-action="Detalle" asp-route-id="@ViewBag.Id" class="btn cj-btn-outline">Cancelar</a>
+    </form>
+</div>

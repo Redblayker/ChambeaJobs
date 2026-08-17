@@ -1,0 +1,92 @@
+@model ConfigurarDobleFactorDto
+@{
+    ViewData["Title"] = "Verificación en dos pasos";
+    Layout = "_LayoutApp";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            @if (TempData["Exito"] != null)
+            {
+                <div class="alert alert-success">@TempData["Exito"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <div class="cj-card">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:34px;height:34px;border-radius:var(--radius-sm);background:var(--color-accent-100);">
+                        <i class="fa-solid fa-shield-halved" style="color:var(--color-accent-700);"></i>
+                    </div>
+                    <h5 class="mb-0">Verificación en dos pasos</h5>
+                </div>
+
+                @if (Model.YaActivado)
+                {
+                    <div class="alert alert-success d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>La verificación en dos pasos está <strong>activada</strong> en tu cuenta. Cada vez que inicies sesión, te pedirá el código de tu aplicación autenticadora además de tu contraseña.</span>
+                    </div>
+                    <form asp-controller="Account" asp-action="DesactivarDobleFactor" method="post" onsubmit="return confirm('¿Desactivar la verificación en dos pasos? Tu cuenta quedará protegida solo con la contraseña.');">
+                        <button type="submit" class="btn btn-outline-danger">Desactivar verificación en dos pasos</button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-secondary">
+                        Agrega una capa extra de seguridad a tu cuenta. Además de tu contraseña, cada inicio de sesión
+                        pedirá un código de 6 dígitos generado por una aplicación como <strong>Google Authenticator</strong>
+                        o <strong>Microsoft Authenticator</strong>.
+                    </p>
+
+                    <ol class="mb-4">
+                        <li class="mb-2">Instala Google Authenticator (o similar) en tu teléfono.</li>
+                        <li class="mb-2">Escanea este código QR desde la app (o escribe la clave manual si no puedes escanear):</li>
+                    </ol>
+
+                    <div class="text-center mb-3">
+                        <div id="contenedorQR" class="d-inline-block p-3" style="background:white; border:1px solid var(--color-mist); border-radius:var(--radius-md);"></div>
+                    </div>
+                    <p class="text-center small text-secondary">
+                        Clave manual: <code id="claveManual" style="font-size:1rem;">@Model.ClaveManual</code>
+                    </p>
+
+                    <form asp-controller="Account" asp-action="ConfirmarDobleFactor" method="post" class="mt-4">
+                        <label class="form-label">Escribe el código de 6 dígitos que muestra la app para confirmar:</label>
+                        <div class="d-flex gap-2">
+                            <input name="codigo" class="form-control" style="max-width:200px; letter-spacing:4px; font-size:1.2rem; text-align:center;"
+                                   maxlength="6" inputmode="numeric" autocomplete="one-time-code" required autofocus />
+                            <button type="submit" class="btn cj-btn-primary">Activar</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="cj-card mt-3">
+            <h5 class="mb-2"><i class="fa-solid fa-right-from-bracket text-danger"></i> Cerrar todas las sesiones</h5>
+            <p class="text-secondary small mb-3">
+                Si sospechas que alguien más tiene acceso a tu cuenta, esto cierra la sesión en todos los
+                dispositivos y navegadores donde hayas iniciado sesión (incluyendo esta). Tendrás que volver a
+                iniciar sesión aquí.
+            </p>
+            <form asp-action="CerrarTodasLasSesiones" method="post" onsubmit="return confirm('¿Cerrar todas tus sesiones activas? Vas a tener que iniciar sesión de nuevo.');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar todas mis sesiones</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        @if (!Model.YaActivado)
+        {
+            @Html.Raw($"new QRCode(document.getElementById('contenedorQR'), {{ text: {System.Text.Json.JsonSerializer.Serialize(Model.UrlOtpAuth)}, width: 200, height: 200 }});")
+        }
+    </script>
+}

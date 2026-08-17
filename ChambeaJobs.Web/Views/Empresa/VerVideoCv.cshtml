@@ -1,0 +1,97 @@
+@model List<ComentarioVideoCvDto>
+@{
+    ViewData["Title"] = "Video Currículum";
+    var detalle = ViewBag.Detalle as DetalleVideoCvDto;
+    var vacanteId = (int)ViewBag.VacanteId;
+    var postulacionId = (int)ViewBag.PostulacionId;
+}
+
+<div class="container py-5" style="max-width: 720px;">
+    <a asp-controller="Empresa" asp-action="CandidatosPostulados" asp-route-vacanteId="@vacanteId" class="small d-inline-block mb-3">
+        <i class="fa-solid fa-arrow-left me-1"></i>Volver a candidatos postulados
+    </a>
+
+    <h2 class="mb-1">Video Currículum</h2>
+    <p class="text-secondary mb-4">@detalle?.NombreCompleto — @detalle?.VacanteTitulo</p>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success">@TempData["Exito"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="cj-card mb-4">
+        @if (string.IsNullOrEmpty(detalle?.VideoCvUrl))
+        {
+            <p class="small text-secondary mb-0">Este candidato aún no ha subido su Video Currículum.</p>
+        }
+        else
+        {
+            <video controls class="w-100 mb-2" style="border-radius:var(--radius-md); max-height:400px;" src="@detalle.VideoCvUrl"></video>
+            <a href="@detalle.VideoCvUrl" target="_blank" class="small">Abrir en una nueva pestaña</a>
+        }
+    </div>
+
+    <div class="cj-card mb-4">
+        <h5 class="mb-3">Dejar un comentario</h5>
+        <form asp-controller="Empresa" asp-action="ComentarVideoCv" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="postulacionId" value="@postulacionId" />
+            <input type="hidden" name="vacanteId" value="@vacanteId" />
+
+            <div class="mb-2">
+                <label class="form-label small">Calificación (opcional)</label>
+                <select name="calificacion" class="form-select form-select-sm" style="max-width: 200px;">
+                    <option value="">Sin calificar</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
+                    <option value="4">⭐⭐⭐⭐ Muy bueno</option>
+                    <option value="3">⭐⭐⭐ Bueno</option>
+                    <option value="2">⭐⭐ Regular</option>
+                    <option value="1">⭐ Débil</option>
+                </select>
+            </div>
+
+            <textarea name="comentario" class="form-control mb-2" rows="3" placeholder="¿Qué te pareció la presentación del candidato?" required></textarea>
+            <button type="submit" class="btn cj-btn-primary btn-sm">Enviar comentario</button>
+        </form>
+    </div>
+
+    <h5 class="mb-3">Comentarios (@Model.Count)</h5>
+    @if (!Model.Any())
+    {
+        <p class="small text-secondary">Aún no hay comentarios sobre este video.</p>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var c in Model)
+            {
+                <div class="cj-card">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                                 style="width:28px; height:28px; border-radius:50%; background:var(--color-primary-100); font-size:0.7rem; font-weight:600; color:var(--color-primary-700);">
+                                @c.ReclutadorNombre.Substring(0, 1).ToUpper()
+                            </div>
+                            <span class="fw-semibold">@c.ReclutadorNombre</span>
+                        </div>
+                        <span class="small text-secondary">@c.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    @if (c.Calificacion.HasValue)
+                    {
+                        <div class="mb-1">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="fa-solid fa-star" style="color:@(i <= c.Calificacion ? "#F0B429" : "#D9D9D9"); font-size:0.8rem;"></i>
+                            }
+                        </div>
+                    }
+                    <p class="mb-0 small">@c.Comentario</p>
+                </div>
+            }
+        </div>
+    }
+</div>
