@@ -1,13 +1,12 @@
 name: Generate PDF from Markdown
-
-permissions:
-  contents: write
   
 on:
   workflow_dispatch:
   push:
     paths:
       - 'docs/**.md'
+permissions:
+  contents: write
 
 jobs:
   build:
