@@ -126,25 +126,46 @@ public class VacanteService : IVacanteService
 
     public async Task<List<VacanteListItemDto>> ObtenerVacantesDeEmpresaAsync(int empresaId)
     {
-        var vacantes = await _unitOfWork.Vacantes.ObtenerPorEmpresaAsync(empresaId);
-        var resultado = new List<VacanteListItemDto>();
+        //var vacantes = await _unitOfWork.Vacantes.ObtenerPorEmpresaAsync(empresaId);
+        //var resultado = new List<VacanteListItemDto>();
 
-        foreach (var v in vacantes.OrderByDescending(v => v.FechaPublicacion))
-        {
-            var postulantes = await _unitOfWork.Postulaciones.ObtenerPorVacanteAsync(v.Id);
-            resultado.Add(new VacanteListItemDto
+        //foreach (var v in vacantes.OrderByDescending(v => v.FechaPublicacion))
+        //{
+        //    var postulantes = await _unitOfWork.Postulaciones.ObtenerPorVacanteAsync(v.Id);
+        //    resultado.Add(new VacanteListItemDto
+        //    {
+        //        Id = v.Id,
+        //        Titulo = v.Titulo,
+        //        CategoriaNombre = v.Categoria?.Nombre ?? string.Empty,
+        //        FechaPublicacion = v.FechaPublicacion,
+        //        Estado = v.Estado,
+        //        NumeroPostulantes = postulantes.Count(),
+        //        EsDestacada = v.EsDestacada
+        //    });
+        //}
+
+        //return resultado;
+
+        var vacantes = (await _unitOfWork.Vacantes.ObtenerPorEmpresaAsync(empresaId))
+            .OrderByDescending(V => V.Id).ToList();
+        var conteos = await _unitOfWork.Postulaciones.ContarPorVacanteAsync(vacantes.Select(V => V.Id));
+
+        return vacantes
+            .OrderByDescending(v => v.FechaPublicacion)
+            .Select(v => new VacanteListItemDto
             {
                 Id = v.Id,
                 Titulo = v.Titulo,
                 CategoriaNombre = v.Categoria?.Nombre ?? string.Empty,
                 FechaPublicacion = v.FechaPublicacion,
                 Estado = v.Estado,
-                NumeroPostulantes = postulantes.Count(),
+                NumeroPostulantes = conteos.GetValueOrDefault(v.Id, 0),
                 EsDestacada = v.EsDestacada
-            });
-        }
+            })
+            .ToList();
 
-        return resultado;
+
+
     }
 
     public async Task<VacanteFormDto?> ObtenerParaEditarAsync(int empresaId, int vacanteId)

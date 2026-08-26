@@ -27,4 +27,6 @@ public class EvaluacionRepository : GenericRepository<EvaluacionPsicometrica>, I
 
     public async Task<bool> ExisteParaPostulacionAsync(int postulacionId) =>
         await ConjuntoDatos.AnyAsync(e => e.PostulacionId == postulacionId);
+
+
 }

@@ -82,24 +82,38 @@ public class PasantiaService : IPasantiaService
 
     public async Task<List<PasantiaListItemDto>> ObtenerPasantiasDeEmpresaAsync(int empresaId)
     {
-        var pasantias = await _unitOfWork.Pasantias.ObtenerPorEmpresaAsync(empresaId);
-        var resultado = new List<PasantiaListItemDto>();
+        //var pasantias = await _unitOfWork.Pasantias.ObtenerPorEmpresaAsync(empresaId);
+        //var resultado = new List<PasantiaListItemDto>();
 
-        foreach (var p in pasantias.OrderByDescending(p => p.FechaPublicacion))
+        //foreach (var p in pasantias.OrderByDescending(p => p.FechaPublicacion))
+        //{
+        //    var postulantes = await _unitOfWork.PostulacionesPasantia.ObtenerPorPasantiaAsync(p.Id);
+        //    resultado.Add(new PasantiaListItemDto
+        //    {
+        //        Id = p.Id,
+        //        Titulo = p.Titulo,
+        //        CategoriaNombre = p.Categoria?.Nombre ?? string.Empty,
+        //        FechaPublicacion = p.FechaPublicacion,
+        //        Estado = p.Estado,
+        //        NumeroPostulantes = postulantes.Count()
+        //    });
+        //}
+
+        //return resultado;
+
+        var pasantias = (await _unitOfWork.Pasantias.ObtenerPorEmpresaAsync(empresaId))
+            .OrderByDescending(p => p.FechaPublicacion).ToList();
+        var conteos = await _unitOfWork.PostulacionesPasantia.ContarPorPasantiasAsync(pasantias.Select(p => p.Id));
+        return pasantias.Select(p => new PasantiaListItemDto
         {
-            var postulantes = await _unitOfWork.PostulacionesPasantia.ObtenerPorPasantiaAsync(p.Id);
-            resultado.Add(new PasantiaListItemDto
-            {
-                Id = p.Id,
-                Titulo = p.Titulo,
-                CategoriaNombre = p.Categoria?.Nombre ?? string.Empty,
-                FechaPublicacion = p.FechaPublicacion,
-                Estado = p.Estado,
-                NumeroPostulantes = postulantes.Count()
-            });
-        }
+            Id = p.Id,
+            Titulo = p.Titulo,
+            CategoriaNombre = p.Categoria?.Nombre ?? string.Empty,
+            FechaPublicacion = p.FechaPublicacion,
+            Estado = p.Estado,
+            NumeroPostulantes = conteos.TryGetValue(p.Id, out var count) ? count : 0
+        }).ToList();
 
-        return resultado;
     }
 
     public async Task<PasantiaFormDto?> ObtenerParaEditarAsync(int empresaId, int pasantiaId)
@@ -258,13 +272,35 @@ public class PasantiaService : IPasantiaService
 
     public async Task<List<PasantiaAdminDto>> ObtenerTodasAsync()
     {
-        var pasantias = await _unitOfWork.Pasantias.ObtenerTodasConDetalleAsync();
-        var resultado = new List<PasantiaAdminDto>();
+        //var pasantias = await _unitOfWork.Pasantias.ObtenerTodasConDetalleAsync();
+        //var resultado = new List<PasantiaAdminDto>();
 
-        foreach (var p in pasantias.OrderByDescending(p => p.FechaPublicacion))
-        {
-            var postulantes = await _unitOfWork.PostulacionesPasantia.ObtenerPorPasantiaAsync(p.Id);
-            resultado.Add(new PasantiaAdminDto
+        //foreach (var p in pasantias.OrderByDescending(p => p.FechaPublicacion))
+        //{
+        //    var postulantes = await _unitOfWork.PostulacionesPasantia.ObtenerPorPasantiaAsync(p.Id);
+        //    resultado.Add(new PasantiaAdminDto
+        //    {
+        //        Id = p.Id,
+        //        Titulo = p.Titulo,
+        //        EmpresaNombre = p.Empresa?.NombreEmpresa ?? string.Empty,
+        //        CategoriaNombre = p.Categoria?.Nombre ?? string.Empty,
+        //        Estado = p.Estado,
+        //        FechaPublicacion = p.FechaPublicacion,
+        //        NumeroPostulantes = postulantes.Count()
+        //    });
+        //}
+
+        //return resultado;
+
+        //var pasantias = await _unitOfWork.Pasantias.ObtenerTodasConDetalleAsync();
+        //var postulantes = await _unitOfWork.PostulacionesPasantia.ObtenerPorPasantiaAsync(select  .Id);
+
+        var pasantias = (await _unitOfWork.Pasantias.ObtenerTodasConDetalleAsync())
+           .OrderByDescending(p => p.Id).ToList();
+        var conteos = await _unitOfWork.PostulacionesPasantia.ObtenerPorPasantiaAsync(pasantias.Select(p => p.Id));
+        return pasantias
+            .OrderByDescending(p => p.FechaPublicacion)
+            .Select(p => new PasantiaAdminDto
             {
                 Id = p.Id,
                 Titulo = p.Titulo,
@@ -272,11 +308,11 @@ public class PasantiaService : IPasantiaService
                 CategoriaNombre = p.Categoria?.Nombre ?? string.Empty,
                 Estado = p.Estado,
                 FechaPublicacion = p.FechaPublicacion,
-                NumeroPostulantes = postulantes.Count()
-            });
-        }
+                NumeroPostulantes = conteos.TryGetValue(p.Id, out var count) ? count : 0
+            }).ToList();
+            
 
-        return resultado;
+
     }
 
     public async Task DespublicarAdminAsync(int pasantiaId, string adminId)

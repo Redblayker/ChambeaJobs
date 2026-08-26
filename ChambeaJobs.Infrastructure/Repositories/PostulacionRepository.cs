@@ -49,4 +49,18 @@ public class PostulacionRepository : GenericRepository<Postulacion>, IPostulacio
             .Include(p => p.EstadoPostulacion)
             .Where(p => p.Vacante!.EmpresaId == empresaId)
             .ToListAsync();
+
+    public async Task<Dictionary<int, int>> ContarPorVacanteAsync(IEnumerable<int> vacanteIds)
+    {
+        var ids = vacanteIds?.ToList() ?? new List<int>();
+        if (ids.Count == 0) return new Dictionary<int, int>();
+
+        var grupos = await ConjuntoDatos
+            .Where(p => ids.Contains(p.VacanteId))
+            .GroupBy(p => p.VacanteId)
+            .Select(g => new { VacanteId = g.Key, Cantidad = g.Count() })
+            .ToListAsync();
+
+        return grupos.ToDictionary(g => g.VacanteId, g => g.Cantidad);
+    }
 }

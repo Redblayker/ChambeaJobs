@@ -32,4 +32,31 @@ public class PostulacionPasantiaRepository : GenericRepository<PostulacionPasant
             .Include(p => p.Pasantia).ThenInclude(pa => pa!.Empresa)
             .Include(p => p.Candidato)
             .FirstOrDefaultAsync(p => p.Id == id);
+
+    public async Task<Dictionary<int, int>> ContarPorPasantiasAsync(IEnumerable<int> pasantiaIds)
+    {
+        var ids = pasantiaIds.Distinct().ToList();
+
+        var counts = await ConjuntoDatos
+            .Where(p => ids.Contains(p.PasantiaId))
+            .GroupBy(p => p.PasantiaId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+
+        // Asegura que todos los ids solicitados aparezcan en el diccionario (0 si no hay postulaciones)
+        return ids.ToDictionary(id => id, id => counts.TryGetValue(id, out var c) ? c : 0);
+    }
+    public async Task<Dictionary<int, int>> ObtenerPorPasantiaAsync(IEnumerable<int> pasantiaIds)
+    {
+        var ids = pasantiaIds.Distinct().ToList();
+
+        var counts = await ConjuntoDatos
+            .Where(p => ids.Contains(p.PasantiaId))
+            .GroupBy(p => p.PasantiaId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+
+        // Asegura que todos los ids solicitados aparezcan en el diccionario (0 si no hay postulaciones)
+        return ids.ToDictionary(id => id, id => counts.TryGetValue(id, out var c) ? c : 0);
+    }
 }

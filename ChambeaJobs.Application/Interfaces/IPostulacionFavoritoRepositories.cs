@@ -11,6 +11,9 @@ public interface IPostulacionRepository : IRepository<Postulacion>
 
     /// <summary>Todas las postulaciones de todas las vacantes de una empresa (para KPIs del dashboard).</summary>
     Task<IEnumerable<Postulacion>> ObtenerPorEmpresaAsync(int empresaId);
+
+    //Agregado por allan<
+    Task<Dictionary<int, int>>ContarPorVacanteAsync(IEnumerable<int> vacanteIds);
 }
 
 public interface IFavoritoRepository

@@ -1,4 +1,5 @@
 using ChambeaJobs.Domain.Entities;
+using System.Collections;
 
 namespace ChambeaJobs.Application.Interfaces;
 
@@ -16,4 +17,8 @@ public interface IPostulacionPasantiaRepository : IRepository<PostulacionPasanti
     Task<IEnumerable<PostulacionPasantia>> ObtenerPorCandidatoAsync(int candidatoId);
     Task<IEnumerable<PostulacionPasantia>> ObtenerPorPasantiaAsync(int pasantiaId);
     Task<PostulacionPasantia?> ObtenerConDetalleAsync(int id);
+
+    //Agregado por allan para correcion de metodos con patrones N+1
+    Task<Dictionary<int,int>> ContarPorPasantiasAsync(IEnumerable<int> pasantiaIds);
+    Task<Dictionary<int,int>> ObtenerPorPasantiaAsync(IEnumerable<int> pasantiaId);
 }

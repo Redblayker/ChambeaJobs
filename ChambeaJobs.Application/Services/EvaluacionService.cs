@@ -94,6 +94,7 @@ public class EvaluacionService : IEvaluacionService
         }
 
         return resultado;
+
     }
 
     public async Task<Dictionary<int, EvaluacionResumenDto>> ObtenerPendientesDeCandidatoAsync(int candidatoId, IEnumerable<int> postulacionIds) =>
