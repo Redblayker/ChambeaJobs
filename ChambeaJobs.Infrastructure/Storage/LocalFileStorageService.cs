@@ -75,8 +75,8 @@ public class LocalFileStorageService : IFileStorageService
 
     public void EliminarArchivo(string rutaRelativa)
     {
-        var rutaFisica = Path.Combine(_entorno.WebRootPath, rutaRelativa.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        if (File.Exists(rutaFisica))
+        var rutaFisica = ObtenerRutaCargaSegura(rutaRelativa);
+        if (rutaFisica is not null && File.Exists(rutaFisica))
         {
             File.Delete(rutaFisica);
         }
@@ -89,13 +89,32 @@ public class LocalFileStorageService : IFileStorageService
             return null;
         }
 
-        var rutaFisica = Path.Combine(_entorno.WebRootPath, rutaRelativa.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        if (!File.Exists(rutaFisica))
+        var rutaFisica = ObtenerRutaCargaSegura(rutaRelativa);
+        if (rutaFisica is null || !File.Exists(rutaFisica))
         {
             return null;
         }
 
         return await File.ReadAllBytesAsync(rutaFisica);
+    }
+
+    private string? ObtenerRutaCargaSegura(string rutaRelativa)
+    {
+        var rutaNormalizada = rutaRelativa.Replace('\\', '/').TrimStart('/');
+        if (!rutaNormalizada.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var directorioUploads = Path.GetFullPath(Path.Combine(_entorno.WebRootPath, "uploads"));
+        var rutaFisica = Path.GetFullPath(Path.Combine(
+            _entorno.WebRootPath,
+            rutaNormalizada.Replace('/', Path.DirectorySeparatorChar)));
+        var prefijoUploads = directorioUploads + Path.DirectorySeparatorChar;
+
+        return rutaFisica.StartsWith(prefijoUploads, StringComparison.OrdinalIgnoreCase)
+            ? rutaFisica
+            : null;
     }
 
     private static async Task ValidarArchivoAsync(IFormFile archivo, string subcarpeta)
