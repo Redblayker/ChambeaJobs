@@ -66,6 +66,32 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
+builder.Services.ConfigureExternalCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>(
+    IdentityConstants.TwoFactorRememberMeScheme, options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>(
+    IdentityConstants.TwoFactorUserIdScheme, options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
 
 // ---------- Google Sign-In (solo para Candidatos) ----------
 // El Client ID/Secret se leen de configuración (appsettings.json en local,
@@ -103,12 +129,15 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
-    options.AddFixedWindowLimiter("autenticacion", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(10);
-        limiterOptions.QueueLimit = 0;
-    });
+    options.AddPolicy("autenticacion", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
 });
 
 // ---------- Límite de tamaño de subida (para permitir Video CV hasta 50MB) ----------
@@ -269,6 +298,7 @@ app.Use(async (context, next) =>
     headers["Permissions-Policy"] = "camera=(self), microphone=(self), geolocation=()";
     headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups";
     headers["Cross-Origin-Resource-Policy"] = "same-origin";
+    headers["X-Permitted-Cross-Domain-Policies"] = "none";
     headers["Content-Security-Policy"] =
         "default-src 'self'; " +
         "frame-ancestors 'none'; " +
