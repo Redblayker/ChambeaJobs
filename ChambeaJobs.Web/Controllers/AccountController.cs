@@ -5,6 +5,7 @@ using ChambeaJobs.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -15,6 +16,7 @@ namespace ChambeaJobs.Web.Controllers;
 /// (Login, Registro selector, Registro Candidato,
 /// Registro Empresa, Recuperar contraseña, Restablecer contraseña).
 /// </summary>
+[EnableRateLimiting("autenticacion")]
 public class AccountController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;

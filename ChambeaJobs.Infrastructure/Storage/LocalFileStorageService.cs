@@ -44,6 +44,10 @@ public class LocalFileStorageService : IFileStorageService
     {
         "videos-cv", "videos-galeria-empresa"
     };
+    private static readonly HashSet<string> CarpetasDocumentoOImagen = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "crm", "comprobantes-gastos"
+    };
 
     public LocalFileStorageService(IWebHostEnvironment entorno)
     {
@@ -52,7 +56,7 @@ public class LocalFileStorageService : IFileStorageService
 
     public async Task<string> GuardarArchivoAsync(IFormFile archivo, string subcarpeta)
     {
-        ValidarArchivo(archivo, subcarpeta);
+        await ValidarArchivoAsync(archivo, subcarpeta);
 
         var carpetaDestino = Path.Combine(_entorno.WebRootPath, "uploads", subcarpeta);
         Directory.CreateDirectory(carpetaDestino);
@@ -71,8 +75,8 @@ public class LocalFileStorageService : IFileStorageService
 
     public void EliminarArchivo(string rutaRelativa)
     {
-        var rutaFisica = Path.Combine(_entorno.WebRootPath, rutaRelativa.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        if (File.Exists(rutaFisica))
+        var rutaFisica = ObtenerRutaCargaSegura(rutaRelativa);
+        if (rutaFisica is not null && File.Exists(rutaFisica))
         {
             File.Delete(rutaFisica);
         }
@@ -85,8 +89,8 @@ public class LocalFileStorageService : IFileStorageService
             return null;
         }
 
-        var rutaFisica = Path.Combine(_entorno.WebRootPath, rutaRelativa.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        if (!File.Exists(rutaFisica))
+        var rutaFisica = ObtenerRutaCargaSegura(rutaRelativa);
+        if (rutaFisica is null || !File.Exists(rutaFisica))
         {
             return null;
         }
@@ -94,7 +98,26 @@ public class LocalFileStorageService : IFileStorageService
         return await File.ReadAllBytesAsync(rutaFisica);
     }
 
-    private static void ValidarArchivo(IFormFile archivo, string subcarpeta)
+    private string? ObtenerRutaCargaSegura(string rutaRelativa)
+    {
+        var rutaNormalizada = rutaRelativa.Replace('\\', '/').TrimStart('/');
+        if (!rutaNormalizada.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var directorioUploads = Path.GetFullPath(Path.Combine(_entorno.WebRootPath, "uploads"));
+        var rutaFisica = Path.GetFullPath(Path.Combine(
+            _entorno.WebRootPath,
+            rutaNormalizada.Replace('/', Path.DirectorySeparatorChar)));
+        var prefijoUploads = directorioUploads + Path.DirectorySeparatorChar;
+
+        return rutaFisica.StartsWith(prefijoUploads, StringComparison.OrdinalIgnoreCase)
+            ? rutaFisica
+            : null;
+    }
+
+    private static async Task ValidarArchivoAsync(IFormFile archivo, string subcarpeta)
     {
         if (archivo.Length == 0)
         {
@@ -103,38 +126,27 @@ public class LocalFileStorageService : IFileStorageService
 
         var extension = Path.GetExtension(archivo.FileName);
 
+        HashSet<string> extensionesPermitidas;
+        long pesoMaximo;
         if (CarpetasDocumentoPdf.Contains(subcarpeta))
         {
-            if (!ExtensionesCvPermitidas.Contains(extension))
-            {
-                throw new ArgumentException("El archivo debe estar en formato PDF.");
-            }
-            if (archivo.Length > PesoMaximoCvBytes)
-            {
-                throw new ArgumentException("El archivo no puede superar los 5 MB.");
-            }
+            extensionesPermitidas = ExtensionesCvPermitidas;
+            pesoMaximo = PesoMaximoCvBytes;
         }
         else if (CarpetasImagen.Contains(subcarpeta))
         {
-            if (!ExtensionesImagenPermitidas.Contains(extension))
-            {
-                throw new ArgumentException("La imagen debe ser JPG o PNG.");
-            }
-            if (archivo.Length > PesoMaximoImagenBytes)
-            {
-                throw new ArgumentException("La imagen no puede superar los 2 MB.");
-            }
+            extensionesPermitidas = ExtensionesImagenPermitidas;
+            pesoMaximo = PesoMaximoImagenBytes;
         }
         else if (CarpetasVideo.Contains(subcarpeta))
         {
-            if (!ExtensionesVideoPermitidas.Contains(extension))
-            {
-                throw new ArgumentException("El video debe ser MP4, WEBM o MOV.");
-            }
-            if (archivo.Length > PesoMaximoVideoBytes)
-            {
-                throw new ArgumentException("El video no puede superar los 50 MB.");
-            }
+            extensionesPermitidas = ExtensionesVideoPermitidas;
+            pesoMaximo = PesoMaximoVideoBytes;
+        }
+        else if (CarpetasDocumentoOImagen.Contains(subcarpeta))
+        {
+            extensionesPermitidas = new HashSet<string>(ExtensionesCvPermitidas.Concat(ExtensionesImagenPermitidas), StringComparer.OrdinalIgnoreCase);
+            pesoMaximo = PesoMaximoCvBytes;
         }
         else
         {
@@ -144,5 +156,34 @@ public class LocalFileStorageService : IFileStorageService
             // como .exe, .js, .html, etc. por una carpeta nueva mal registrada).
             throw new ArgumentException($"No hay reglas de validación definidas para la carpeta '{subcarpeta}'.");
         }
+
+        if (!extensionesPermitidas.Contains(extension))
+            throw new ArgumentException("El tipo de archivo no está permitido.");
+        if (archivo.Length > pesoMaximo)
+            throw new ArgumentException($"El archivo no puede superar los {pesoMaximo / 1024 / 1024} MB.");
+
+        await using var stream = archivo.OpenReadStream();
+        var firma = new byte[16];
+        var leidos = 0;
+        while (leidos < firma.Length)
+        {
+            var leidosAhora = await stream.ReadAsync(firma.AsMemory(leidos, firma.Length - leidos));
+            if (leidosAhora == 0) break;
+            leidos += leidosAhora;
+        }
+
+        if (!FirmaCoincideConExtension(extension, firma.AsSpan(0, leidos)))
+            throw new ArgumentException("El contenido del archivo no coincide con su formato declarado.");
     }
+
+    private static bool FirmaCoincideConExtension(string extension, ReadOnlySpan<byte> firma) =>
+        extension.ToLowerInvariant() switch
+        {
+            ".pdf" => firma.StartsWith("%PDF-"u8),
+            ".png" => firma.StartsWith(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+            ".jpg" or ".jpeg" => firma.StartsWith(new byte[] { 0xFF, 0xD8, 0xFF }),
+            ".webm" => firma.StartsWith(new byte[] { 0x1A, 0x45, 0xDF, 0xA3 }),
+            ".mp4" or ".mov" => firma.Length >= 8 && firma.Slice(4, 4).SequenceEqual("ftyp"u8),
+            _ => false
+        };
 }
