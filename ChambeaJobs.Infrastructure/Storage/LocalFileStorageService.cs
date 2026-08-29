@@ -163,27 +163,87 @@ public class LocalFileStorageService : IFileStorageService
             throw new ArgumentException($"El archivo no puede superar los {pesoMaximo / 1024 / 1024} MB.");
 
         await using var stream = archivo.OpenReadStream();
-        var firma = new byte[16];
+        var contenido = new byte[checked((int)archivo.Length)];
         var leidos = 0;
-        while (leidos < firma.Length)
+        while (leidos < contenido.Length)
         {
-            var leidosAhora = await stream.ReadAsync(firma.AsMemory(leidos, firma.Length - leidos));
-            if (leidosAhora == 0) break;
+            var leidosAhora = await stream.ReadAsync(contenido.AsMemory(leidos));
+            if (leidosAhora == 0)
+            {
+                break;
+            }
+
             leidos += leidosAhora;
         }
 
-        if (!FirmaCoincideConExtension(extension, firma.AsSpan(0, leidos)))
+        if (leidos != contenido.Length || !ContenidoCoincideConExtension(extension, contenido))
             throw new ArgumentException("El contenido del archivo no coincide con su formato declarado.");
     }
 
-    private static bool FirmaCoincideConExtension(string extension, ReadOnlySpan<byte> firma) =>
+    private static bool ContenidoCoincideConExtension(string extension, ReadOnlySpan<byte> contenido) =>
         extension.ToLowerInvariant() switch
         {
-            ".pdf" => firma.StartsWith("%PDF-"u8),
-            ".png" => firma.StartsWith(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
-            ".jpg" or ".jpeg" => firma.StartsWith(new byte[] { 0xFF, 0xD8, 0xFF }),
-            ".webm" => firma.StartsWith(new byte[] { 0x1A, 0x45, 0xDF, 0xA3 }),
-            ".mp4" or ".mov" => firma.Length >= 8 && firma.Slice(4, 4).SequenceEqual("ftyp"u8),
+            ".pdf" => EsPdfValido(contenido),
+            ".png" => EsPngValido(contenido),
+            ".jpg" or ".jpeg" => EsJpegValido(contenido),
+            ".webm" => EsWebmValido(contenido),
+            ".mp4" or ".mov" => EsArchivoIsoBaseMediaValido(contenido),
             _ => false
         };
+
+    private static bool EsPdfValido(ReadOnlySpan<byte> contenido) =>
+        contenido.StartsWith("%PDF-"u8)
+        && contenido.Length >= 8
+        && contenido.Slice(Math.Max(0, contenido.Length - 1024)).IndexOf("%%EOF"u8) >= 0;
+
+    private static bool EsPngValido(ReadOnlySpan<byte> contenido)
+    {
+        if (!contenido.StartsWith(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }))
+        {
+            return false;
+        }
+
+        var offset = 8;
+        var encontroIend = false;
+        while (offset + 12 <= contenido.Length)
+        {
+            var longitud = System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(contenido.Slice(offset, 4));
+            if (longitud > int.MaxValue || offset + 12L + longitud > contenido.Length)
+            {
+                return false;
+            }
+
+            var tipo = contenido.Slice(offset + 4, 4);
+            if (tipo.SequenceEqual("IEND"u8))
+            {
+                encontroIend = longitud == 0 && offset + 12 == contenido.Length;
+                break;
+            }
+
+            offset += checked((int)(12 + longitud));
+        }
+
+        return encontroIend;
+    }
+
+    private static bool EsJpegValido(ReadOnlySpan<byte> contenido) =>
+        contenido.Length >= 4
+        && contenido.StartsWith(new byte[] { 0xFF, 0xD8, 0xFF })
+        && contenido[^2] == 0xFF
+        && contenido[^1] == 0xD9;
+
+    private static bool EsWebmValido(ReadOnlySpan<byte> contenido) =>
+        contenido.StartsWith(new byte[] { 0x1A, 0x45, 0xDF, 0xA3 })
+        && contenido.IndexOf(new byte[] { 0x42, 0x82, 0x84, (byte)'w', (byte)'e', (byte)'b', (byte)'m' }) >= 0;
+
+    private static bool EsArchivoIsoBaseMediaValido(ReadOnlySpan<byte> contenido)
+    {
+        if (contenido.Length < 16 || !contenido.Slice(4, 4).SequenceEqual("ftyp"u8))
+        {
+            return false;
+        }
+
+        var tamanoCaja = System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(contenido);
+        return tamanoCaja >= 16 && tamanoCaja <= contenido.Length;
+    }
 }

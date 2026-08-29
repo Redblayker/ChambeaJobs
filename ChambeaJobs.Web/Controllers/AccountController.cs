@@ -306,8 +306,6 @@ public class AccountController : Controller
         return Redirect(destino);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
     /// <summary>true si la petición viene del fetch() del modal de login (no una navegación normal de página completa).</summary>
     private bool EsPeticionAjax() =>
         string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
@@ -343,6 +341,8 @@ public class AccountController : Controller
         return Url.Action("Index", "Home") ?? "/";
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginDto modelo)
     {
         ViewBag.GoogleDisponible = GoogleDisponible;
