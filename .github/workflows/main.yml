@@ -25,7 +25,7 @@ jobs:
       - name: Generate PDF from Markdown (md-to-pdf)
         run: |
           # Generate PDF; md-to-pdf renders Mermaid diagrams embedded in code fences
-          md-to-pdf DOCUMENTACION_COMPLETA.md --output DOCUMENTACION_COMPLETA.pdf
+          md-to-pdf DOCUMENTACION_COMPLETA.md
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
