@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.DTOs;
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -70,10 +71,10 @@ public class AdminController : Controller
     // ---------- Pagos pendientes ----------
 
     [HttpGet]
-    public async Task<IActionResult> PagosPendientes()
+    public async Task<IActionResult> PagosPendientes(int pagina = 1)
     {
         var pendientes = await _paqueteService.ObtenerPagosPendientesAsync();
-        return View(pendientes);
+        return View(this.Paginar(pendientes, pagina));
     }
 
     [HttpPost]
@@ -113,7 +114,7 @@ public class AdminController : Controller
     // ---------- Historial completo de pagos (todas las empresas) ----------
 
     [HttpGet]
-    public async Task<IActionResult> HistorialPagos(string? nombreEmpresa, string? estadoPago, DateTime? desde, DateTime? hasta)
+    public async Task<IActionResult> HistorialPagos(string? nombreEmpresa, string? estadoPago, DateTime? desde, DateTime? hasta, int pagina = 1)
     {
         var historial = await _paqueteService.ObtenerHistorialCompletoAsync(nombreEmpresa, estadoPago, desde, hasta);
 
@@ -123,7 +124,7 @@ public class AdminController : Controller
         ViewBag.Hasta = hasta?.ToString("yyyy-MM-dd");
         ViewBag.TotalMostrado = historial.Where(p => p.EstadoPago == "Aprobado").Sum(p => p.Monto);
 
-        return View(historial);
+        return View(this.Paginar(historial, pagina));
     }
 
     [HttpGet]
@@ -144,10 +145,10 @@ public class AdminController : Controller
     // ---------- Gestión de Usuarios ----------
 
     [HttpGet]
-    public async Task<IActionResult> GestionUsuarios()
+    public async Task<IActionResult> GestionUsuarios(int pagina = 1)
     {
         var usuarios = await _usuarioService.ObtenerCandidatosYAdminsAsync();
-        return View(usuarios);
+        return View(this.Paginar(usuarios, pagina));
     }
 
     [HttpPost]
@@ -187,10 +188,10 @@ public class AdminController : Controller
     // ---------- Gestión de Empresas ----------
 
     [HttpGet]
-    public async Task<IActionResult> GestionEmpresas()
+    public async Task<IActionResult> GestionEmpresas(int pagina = 1)
     {
         var empresas = await _empresaService.ObtenerTodasAsync();
-        return View(empresas);
+        return View(this.Paginar(empresas, pagina));
     }
 
     [HttpPost]
@@ -230,10 +231,10 @@ public class AdminController : Controller
     // ---------- Gestión de Vacantes ----------
 
     [HttpGet]
-    public async Task<IActionResult> GestionVacantes()
+    public async Task<IActionResult> GestionVacantes(int pagina = 1)
     {
         var vacantes = await _vacanteService.ObtenerTodasAsync();
-        return View(vacantes);
+        return View(this.Paginar(vacantes, pagina));
     }
 
     [HttpPost]
@@ -256,10 +257,10 @@ public class AdminController : Controller
     // ---------- Gestión de Pasantías (módulo independiente de Vacantes) ----------
 
     [HttpGet]
-    public async Task<IActionResult> GestionPasantias()
+    public async Task<IActionResult> GestionPasantias(int pagina = 1)
     {
         var pasantias = await _pasantiaService.ObtenerTodasAsync();
-        return View(pasantias);
+        return View(this.Paginar(pasantias, pagina));
     }
 
     [HttpPost]
@@ -475,19 +476,19 @@ public class AdminController : Controller
     // ---------- Auditoría ----------
 
     [HttpGet]
-    public async Task<IActionResult> Auditoria()
+    public async Task<IActionResult> Auditoria(int pagina = 1)
     {
         var registros = await _auditoriaService.ObtenerRecientesAsync();
-        return View(registros);
+        return View(this.Paginar(registros, pagina));
     }
 
     // ---------- Soporte ----------
 
     [HttpGet]
-    public async Task<IActionResult> Soporte()
+    public async Task<IActionResult> Soporte(int pagina = 1)
     {
         var tickets = await _soporteService.ObtenerTodosAsync();
-        return View(tickets);
+        return View(this.Paginar(tickets, pagina));
     }
 
     [HttpGet]

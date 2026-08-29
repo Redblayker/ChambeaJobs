@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.DTOs;
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -265,11 +266,11 @@ public class EmpresaController : Controller
     // ---------- Mis vacantes ----------
 
     [HttpGet]
-    public async Task<IActionResult> MisVacantes()
+    public async Task<IActionResult> MisVacantes(int pagina = 1)
     {
         var empresaId = await ObtenerEmpresaIdAsync();
         var vacantes = await _vacanteService.ObtenerVacantesDeEmpresaAsync(empresaId);
-        return View(vacantes);
+        return View(this.Paginar(vacantes, pagina));
     }
 
     /// <summary>Carreras de una Categoría, para el desplegable dependiente en Publicar/Editar Vacante (AJAX).</summary>
@@ -447,11 +448,11 @@ public class EmpresaController : Controller
     // ---------- Historial de pagos ----------
 
     [HttpGet]
-    public async Task<IActionResult> HistorialPagos()
+    public async Task<IActionResult> HistorialPagos(int pagina = 1)
     {
         var empresaId = await ObtenerEmpresaIdAsync();
         var historial = await _paqueteService.ObtenerHistorialAsync(empresaId);
-        return View(historial);
+        return View(this.Paginar(historial, pagina));
     }
 
     [HttpGet]
@@ -475,7 +476,7 @@ public class EmpresaController : Controller
     // ---------- Candidatos postulados a una vacante ----------
 
     [HttpGet]
-    public async Task<IActionResult> CandidatosPostulados(int vacanteId)
+    public async Task<IActionResult> CandidatosPostulados(int vacanteId, int pagina = 1)
     {
         var empresaId = await ObtenerEmpresaIdAsync();
 
@@ -494,12 +495,13 @@ public class EmpresaController : Controller
                 }
             }
 
+            var postulantesPagina = this.Paginar(postulantes, pagina);
             ViewBag.VacanteId = vacanteId;
             ViewBag.EstadosDisponibles = await _postulacionService.ObtenerEstadosDisponiblesAsync();
             ViewBag.Evaluaciones = await _evaluacionService.ObtenerResumenPorPostulacionesAsync(
-                postulantes.Select(p => p.PostulacionId));
+                postulantesPagina.Select(p => p.PostulacionId));
             ViewBag.EstadoPaquete = await _paqueteService.ObtenerEstadoPaqueteAsync(empresaId);
-            return View(postulantes);
+            return View(postulantesPagina);
         }
         catch (InvalidOperationException ex)
         {
@@ -592,7 +594,7 @@ public class EmpresaController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> VerVideoCv(int postulacionId, int vacanteId)
+    public async Task<IActionResult> VerVideoCv(int postulacionId, int vacanteId, int pagina = 1)
     {
         var empresaId = await ObtenerEmpresaIdAsync();
 
@@ -611,7 +613,7 @@ public class EmpresaController : Controller
             ViewBag.PostulacionId = postulacionId;
             ViewBag.VacanteId = vacanteId;
             ViewBag.Detalle = detalle;
-            return View(comentarios);
+            return View(this.Paginar(comentarios, pagina));
         }
         catch (InvalidOperationException ex)
         {

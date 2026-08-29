@@ -1,5 +1,6 @@
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -31,7 +32,7 @@ public class PasantiaController : Controller
     // ---------- Buscar pasantías (público) ----------
 
     [HttpGet]
-    public async Task<IActionResult> Buscar(string? q, int? categoriaId, int? ubicacionId, string? modalidad)
+    public async Task<IActionResult> Buscar(string? q, int? categoriaId, int? ubicacionId, string? modalidad, int pagina = 1)
     {
         var resultados = await _pasantiaService.BuscarAsync(q, categoriaId, ubicacionId, modalidad);
 
@@ -42,7 +43,7 @@ public class PasantiaController : Controller
         ViewBag.UbicacionId = ubicacionId;
         ViewBag.Modalidad = modalidad;
 
-        return View(resultados);
+        return View(this.Paginar(resultados, pagina));
     }
 
     // ---------- Detalle de pasantía (público) ----------
@@ -98,13 +99,13 @@ public class PasantiaController : Controller
 
     [HttpGet]
     [Authorize(Roles = RolesSistema.Candidato)]
-    public async Task<IActionResult> MisPostulaciones()
+    public async Task<IActionResult> MisPostulaciones(int pagina = 1)
     {
         var candidatoId = await ObtenerCandidatoIdAsync()
             ?? throw new InvalidOperationException("No se encontró tu perfil de candidato.");
 
         var postulaciones = await _pasantiaService.ObtenerMisPostulacionesAsync(candidatoId);
-        return View(postulaciones);
+        return View(this.Paginar(postulaciones, pagina));
     }
 
     private async Task<int?> ObtenerCandidatoIdAsync()

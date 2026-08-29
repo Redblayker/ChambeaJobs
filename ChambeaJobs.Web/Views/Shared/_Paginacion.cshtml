@@ -1,0 +1,48 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var paginaActual = ViewData["PaginaActual"] as int? ?? 1;
+    var totalPaginas = ViewData["TotalPaginas"] as int? ?? 1;
+    var totalElementos = ViewData["TotalElementos"] as int? ?? 0;
+
+    var parametros = Context.Request.Query
+        .Where(parametro => !string.Equals(parametro.Key, "pagina", StringComparison.OrdinalIgnoreCase))
+        .SelectMany(parametro => parametro.Value.Select(valor => new KeyValuePair<string, string?>(parametro.Key, valor)))
+        .ToList();
+}
+
+@if (totalElementos > 0)
+{
+    <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4" aria-label="Paginación">
+        <span class="small text-secondary">@totalElementos resultado(s) en total</span>
+        @if (totalPaginas > 1)
+        {
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(paginaActual == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@(QueryString.Create(parametros.Append(new("pagina", (paginaActual - 1).ToString()))))" aria-label="Página anterior">Anterior</a>
+                </li>
+                @{
+                    var paginasVisibles = Enumerable.Range(1, totalPaginas)
+                        .Where(numeroPagina => numeroPagina == 1
+                            || numeroPagina == totalPaginas
+                            || Math.Abs(numeroPagina - paginaActual) <= 2)
+                        .ToList();
+                    var paginaAnterior = 0;
+                }
+                @foreach (var numeroPagina in paginasVisibles)
+                {
+                    @if (paginaAnterior > 0 && numeroPagina > paginaAnterior + 1)
+                    {
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    }
+                    <li class="page-item @(numeroPagina == paginaActual ? "active" : "")">
+                        <a class="page-link" href="@(QueryString.Create(parametros.Append(new("pagina", numeroPagina.ToString()))))">@numeroPagina</a>
+                    </li>
+                    paginaAnterior = numeroPagina;
+                }
+                <li class="page-item @(paginaActual == totalPaginas ? "disabled" : "")">
+                    <a class="page-link" href="@(QueryString.Create(parametros.Append(new("pagina", (paginaActual + 1).ToString()))))" aria-label="Página siguiente">Siguiente</a>
+                </li>
+            </ul>
+        }
+    </nav>
+}

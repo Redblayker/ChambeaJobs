@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.DTOs;
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using ChambeaJobs.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -404,7 +405,7 @@ public class CandidatoController : Controller
     // ---------- Mis postulaciones ----------
 
     [HttpGet]
-    public async Task<IActionResult> MisPostulaciones()
+    public async Task<IActionResult> MisPostulaciones(int pagina = 1)
     {
         var perfil = await _candidatoService.ObtenerPerfilPorUsuarioIdAsync(UsuarioActualId);
         if (perfil is null)
@@ -414,9 +415,10 @@ public class CandidatoController : Controller
         }
 
         var postulaciones = await _postulacionService.ObtenerMisPostulacionesAsync(perfil.Id);
+        var postulacionesPagina = this.Paginar(postulaciones, pagina);
         ViewBag.Evaluaciones = await _evaluacionService.ObtenerPendientesDeCandidatoAsync(
-            perfil.Id, postulaciones.Select(p => p.Id));
-        return View(postulaciones);
+            perfil.Id, postulacionesPagina.Select(p => p.Id));
+        return View(postulacionesPagina);
     }
 
     [HttpGet]

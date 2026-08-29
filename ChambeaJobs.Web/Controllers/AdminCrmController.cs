@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.DTOs;
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -37,12 +38,12 @@ public class AdminCrmController : Controller
     }
 
     [HttpGet("Lista")]
-    public async Task<IActionResult> Lista(string? busqueda, EtapaPipelineCrm? etapa)
+    public async Task<IActionResult> Lista(string? busqueda, EtapaPipelineCrm? etapa, int pagina = 1)
     {
         ViewBag.Busqueda = busqueda;
         ViewBag.EtapaSeleccionada = etapa;
         var empresas = await _crmService.ListarAsync(busqueda, etapa);
-        return View(empresas);
+        return View(this.Paginar(empresas, pagina));
     }
 
     [HttpGet("Nueva")]
@@ -140,7 +141,7 @@ public class AdminCrmController : Controller
     }
 
     [HttpGet("Agenda")]
-    public async Task<IActionResult> Agenda(DateTime? desde, DateTime? hasta)
+    public async Task<IActionResult> Agenda(DateTime? desde, DateTime? hasta, int pagina = 1)
     {
         var fechaDesde = desde ?? DateTime.Today;
         var fechaHasta = hasta ?? DateTime.Today.AddDays(30);
@@ -148,7 +149,7 @@ public class AdminCrmController : Controller
         ViewBag.Hasta = fechaHasta;
 
         var items = await _crmService.ObtenerAgendaAsync(fechaDesde, fechaHasta.AddDays(1).AddSeconds(-1));
-        return View(items);
+        return View(this.Paginar(items, pagina));
     }
 
     [HttpGet("Reportes")]

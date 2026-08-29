@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.DTOs;
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -63,10 +64,10 @@ public class AdminFinanzasController : Controller
     }
 
     [HttpGet("Ingresos")]
-    public async Task<IActionResult> Ingresos([FromQuery] FiltroReporteFinancieroDto filtro)
+    public async Task<IActionResult> Ingresos([FromQuery] FiltroReporteFinancieroDto filtro, int pagina = 1)
     {
         var ingresos = await _ingresoService.ListarAsync(filtro);
-        return View(ingresos);
+        return View(this.Paginar(ingresos, pagina));
     }
 
     [Authorize(Roles = RolesSistema.FinanzasEditar)]
@@ -87,11 +88,11 @@ public class AdminFinanzasController : Controller
     }
 
     [HttpGet("Gastos")]
-    public async Task<IActionResult> Gastos([FromQuery] FiltroReporteFinancieroDto filtro)
+    public async Task<IActionResult> Gastos([FromQuery] FiltroReporteFinancieroDto filtro, int pagina = 1)
     {
         ViewBag.Categorias = await _categoriaService.ListarAsync(TipoCategoriaFinanciera.Gasto);
         var gastos = await _gastoService.ListarAsync(filtro);
-        return View(gastos);
+        return View(this.Paginar(gastos, pagina));
     }
 
     [Authorize(Roles = RolesSistema.FinanzasEditar)]
@@ -213,9 +214,9 @@ public class AdminFinanzasController : Controller
     }
 
     [HttpGet("Auditoria")]
-    public async Task<IActionResult> Auditoria()
+    public async Task<IActionResult> Auditoria(int pagina = 1)
     {
         var registros = await _auditoriaService.ObtenerRecientesAsync();
-        return View(registros);
+        return View(this.Paginar(registros, pagina));
     }
 }
