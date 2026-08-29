@@ -1,5 +1,6 @@
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -37,7 +38,7 @@ public class VacanteController : Controller
     // ---------- Buscar vacantes (público) ----------
 
     [HttpGet]
-    public async Task<IActionResult> Buscar(string? q, int? categoriaId, int? ubicacionId, string? modalidad)
+    public async Task<IActionResult> Buscar(string? q, int? categoriaId, int? ubicacionId, string? modalidad, int pagina = 1)
     {
         var resultados = await _vacanteService.BuscarAsync(q, categoriaId, ubicacionId, modalidad);
 
@@ -48,7 +49,7 @@ public class VacanteController : Controller
         ViewBag.UbicacionId = ubicacionId;
         ViewBag.Modalidad = modalidad;
 
-        return View(resultados);
+        return View(this.Paginar(resultados, pagina));
     }
 
     // ---------- Detalle de vacante (público) ----------
@@ -80,7 +81,7 @@ public class VacanteController : Controller
     // ---------- Perfil público de empresa ----------
 
     [HttpGet]
-    public async Task<IActionResult> PerfilEmpresa(int id)
+    public async Task<IActionResult> PerfilEmpresa(int id, int pagina = 1)
     {
         var perfil = await _empresaService.ObtenerPerfilPublicoAsync(id);
         if (perfil is null)
@@ -89,7 +90,9 @@ public class VacanteController : Controller
         }
 
         var vacantesDeLaEmpresa = await _vacanteService.ObtenerVacantesDeEmpresaAsync(id);
-        ViewBag.VacantesDeLaEmpresa = vacantesDeLaEmpresa.Where(v => v.Estado == "Activa").ToList();
+        ViewBag.VacantesDeLaEmpresa = this.Paginar(
+            vacantesDeLaEmpresa.Where(v => v.Estado == "Activa"),
+            pagina);
 
         return View(perfil);
     }

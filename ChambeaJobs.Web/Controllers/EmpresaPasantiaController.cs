@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.DTOs;
 using ChambeaJobs.Application.Interfaces;
 using ChambeaJobs.Domain.Enums;
+using ChambeaJobs.Web.Extensions;
 using ChambeaJobs.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -44,11 +45,11 @@ public class EmpresaPasantiaController : Controller
     // ---------- Mis pasantías ----------
 
     [HttpGet]
-    public async Task<IActionResult> MisPasantias()
+    public async Task<IActionResult> MisPasantias(int pagina = 1)
     {
         var empresaId = await ObtenerEmpresaIdAsync();
         var pasantias = await _pasantiaService.ObtenerPasantiasDeEmpresaAsync(empresaId);
-        return View(pasantias);
+        return View(this.Paginar(pasantias, pagina));
     }
 
     // ---------- Publicar pasantía ----------
@@ -181,7 +182,7 @@ public class EmpresaPasantiaController : Controller
     // ---------- Postulantes de una pasantía ----------
 
     [HttpGet]
-    public async Task<IActionResult> Postulantes(int pasantiaId)
+    public async Task<IActionResult> Postulantes(int pasantiaId, int pagina = 1)
     {
         var empresaId = await ObtenerEmpresaIdAsync();
 
@@ -202,7 +203,7 @@ public class EmpresaPasantiaController : Controller
             }
 
             ViewBag.PasantiaId = pasantiaId;
-            return View(postulantes);
+            return View(this.Paginar(postulantes, pagina));
         }
         catch (InvalidOperationException ex)
         {

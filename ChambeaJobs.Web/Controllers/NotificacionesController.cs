@@ -1,6 +1,7 @@
 using ChambeaJobs.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ChambeaJobs.Web.Extensions;
 using System.Security.Claims;
 
 namespace ChambeaJobs.Web.Controllers;
@@ -24,10 +25,10 @@ public class NotificacionesController : Controller
         ?? throw new InvalidOperationException("No se pudo determinar el usuario autenticado.");
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pagina = 1)
     {
         var notificaciones = await _notificacionService.ObtenerRecientesAsync(UsuarioActualId, 100);
-        return View(notificaciones);
+        return View(this.Paginar(notificaciones, pagina));
     }
 
     /// <summary>Marca la notificación como leída y redirige a su destino (o al listado si no tiene uno).</summary>
